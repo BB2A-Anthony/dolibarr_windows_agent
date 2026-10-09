@@ -1,10 +1,13 @@
 <?php
 /**
- * REST API endpoint for the systeminfo module (Dolibarr API Explorer).
+ * REST API endpoints for the systeminfo module (Dolibarr API Explorer).
  *
- * POST /api/index.php/systeminfo/machine
+ * POST /api/index.php/systeminfo/machine        -> store a report
+ * GET  /api/index.php/systeminfo/machine        -> latest report per machine
+ * GET  /api/index.php/systeminfo/machine/{id}   -> latest report of one machine
  */
 require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
+require_once __DIR__ . '/systeminfo_report.class.php';
 
 class Systeminfo extends DolibarrApi
 {
@@ -23,7 +26,7 @@ class Systeminfo extends DolibarrApi
     }
 
     /**
-     * Receive system info from the Windows agent.
+     * Receive system info from the Windows agent and store it.
      *
      * @param  array $payload JSON body sent by the agent
      * @return array
@@ -39,43 +42,95 @@ class Systeminfo extends DolibarrApi
 
         $thirdparty = new Societe($this->db);
         $result = $thirdparty->fetch('', '', $payload['unique_id']);
+        $fk_soc = ($result > 0 && $thirdparty->id > 0) ? $thirdparty->id : null;
 
         $hostname = isset($payload['hostname']) ? $payload['hostname'] : '';
         $os = isset($payload['os_details']['ProductName'])
             ? $payload['os_details']['ProductName'] : '';
 
-        if ($result > 0 && $thirdparty->id > 0) {
-            $note = "Rapport agent du " . dol_print_date(dol_now(), 'dayhour') . "\n";
-            $note .= "Hostname: " . $hostname . "\n";
-            $note .= "OS: " . $os . "\n";
-            if (isset($payload['memory']['total_bytes'])) {
-                $note .= "Memoire totale: " . round($payload['memory']['total_bytes'] / 1073741824, 1) . " Go\n";
-            }
-            if (isset($payload['cpu']['percent_used'])) {
-                $note .= "CPU utilise: " . $payload['cpu']['percent_used'] . " %\n";
-            }
+        $report = new SysteminfoReport($this->db);
+        $report->unique_id = $payload['unique_id'];
+        $report->fk_soc = $fk_soc;
+        $report->hostname = $hostname;
+        $report->os = $os;
+        $report->report = json_encode($payload);
+        $id = $report->create($user);
 
-            $thirdparty->note_private = ($thirdparty->note_private ? $thirdparty->note_private . "\n" : '') . $note;
-            $thirdparty->update($thirdparty->id, $user);
-
-            dol_syslog(
-                'systeminfo: rapport enregistre pour le tiers #' . $thirdparty->id,
-                LOG_INFO
-            );
-            return array(
-                'success' => true,
-                'thirdparty_id' => $thirdparty->id,
-            );
+        if ($id < 0) {
+            throw new RestException(500, 'Erreur lors de l\'enregistrement du rapport');
         }
 
         dol_syslog(
-            'systeminfo: aucun tiers trouve pour unique_id=' . $payload['unique_id'],
-            LOG_WARNING
+            'systeminfo: rapport enregistre (rowid=' . $id . ')'
+            . ($fk_soc ? ' pour le tiers #' . $fk_soc : ' sans tiers'),
+            LOG_INFO
         );
+
         return array(
             'success' => true,
-            'thirdparty_id' => null,
-            'message' => 'Aucun tiers correspondant; rapport journalise.',
+            'report_id' => $id,
+            'thirdparty_id' => $fk_soc,
+        );
+    }
+
+    /**
+     * Get the latest report of each known machine.
+     *
+     * @return array
+     */
+    public function indexMachine()
+    {
+        $report = new SysteminfoReport($this->db);
+        $rows = $report->listLatestPerMachine();
+        $out = array();
+        foreach ($rows as $obj) {
+            $out[] = $this->_formatRow($obj);
+        }
+        return $out;
+    }
+
+    /**
+     * Get the latest report of one machine by its unique_id.
+     *
+     * @param  string $unique_id Machine identifier
+     * @return array
+     * @throws RestException 404 Unknown machine
+     */
+    public function getMachine($unique_id)
+    {
+        $report = new SysteminfoReport($this->db);
+        $result = $report->fetchLatest($unique_id);
+        if ($result < 0) {
+            throw new RestException(500, 'Erreur base de donnees');
+        }
+        if ($result == 0) {
+            throw new RestException(404, 'Aucun rapport pour unique_id=' . $unique_id);
+        }
+
+        $row = (object) array(
+            'rowid' => $report->id,
+            'unique_id' => $report->unique_id,
+            'fk_soc' => $report->fk_soc,
+            'hostname' => $report->hostname,
+            'os' => $report->os,
+            'report' => $report->report,
+            'date_creation' => $report->date_creation,
+        );
+        return $this->_formatRow($row);
+    }
+
+    /**
+     * Format a report row for API output.
+     */
+    private function _formatRow($obj)
+    {
+        return array(
+            'unique_id' => $obj->unique_id,
+            'thirdparty_id' => $obj->fk_soc,
+            'hostname' => $obj->hostname,
+            'os' => $obj->os,
+            'date_creation' => $obj->date_creation,
+            'report' => json_decode($obj->report, true),
         );
     }
 }

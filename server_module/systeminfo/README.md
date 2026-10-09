@@ -1,30 +1,57 @@
 # Module Dolibarr « systeminfo »
 
-Ce module expose l'endpoint REST qui reçoit les informations systèmes de l'agent Windows :
+Ce module reçoit les informations systèmes de l'agent Windows et permet de les **interroger depuis Dolibarr** (API REST + fiche tiers).
 
-```
-POST /api/index.php/systeminfo/machine
-```
+## Endpoints
+
+| Méthode | URL | Rôle |
+|---|---|---|
+| `POST` | `/api/index.php/systeminfo/machine` | L'agent y envoie son rapport (authentifié par `DOLIBARR_API_KEY`) |
+| `GET` | `/api/index.php/systeminfo/machine` | Dernier rapport de **chaque machine** connue |
+| `GET` | `/api/index.php/systeminfo/machine/{unique_id}` | Dernier rapport d'**une machine** par identifiant unique |
 
 ## Installation
 
 1. Copier le dossier `systeminfo` dans `htdocs/custom/` de votre instance Dolibarr.
-2. Activer le module : **Accueil > Configuration > Modules/Boxes > Modules externes** (activer « SYSTEMINFO »).
-3. Vérifier que l'API est active : **Configuration > API** (module REST activé), et qu'un utilisateur possède une **clé API** (fiche utilisateur > « Interface API » > générer une clé).
-4. Tester :
+2. Créer la table en exécutant `sql/llx_systeminfo_reports.sql` (via phpMyAdmin ou l'outil SQL de Dolibarr).
+3. Activer le module : **Accueil > Configuration > Modules/Boxes > Modules externes** (activer « SYSTEMINFO »).
+4. Vérifier que l'API est active (**Configuration > API**, module REST) et qu'un utilisateur possède une **clé API** (fiche utilisateur > « Interface API »).
+
+## Interroger depuis Dolibarr
+
+Dernier rapport d'une machine :
 
 ```bash
-curl -X POST https://votre-dolibarr/api/index.php/systeminfo/machine \
-  -H "DOLIBARR_API_KEY: <cle>" -H "Content-Type: application/json" \
-  -d '{"unique_id":"TIERS-001","hostname":"PC-TEST"}'
+curl -H "DOLIBARR_API_KEY: <cle>" \
+  https://votre-dolibarr/api/index.php/systeminfo/machine/TIERS-001
 ```
 
-## Fonctionnement
+Tous les derniers rapports :
 
-- L'agent envoie un JSON avec un champ `unique_id` qui identifie la machine.
-- Le module cherche un tiers dont le **code client** (`code_client`) correspond à `unique_id`.
-- S'il existe, un résumé du rapport (hostname, OS, mémoire, CPU) est ajouté à la **note privée** du tiers ; sinon l'événement est journalisé dans `dolibarr_main.log`.
+```bash
+curl -H "DOLIBARR_API_KEY: <cle>" \
+  https://votre-dolibarr/api/index.php/systeminfo/machine
+```
 
-## Personnalisation
+Exemple de réponse :
 
-Le point d'entrée est `class/api_systeminfo.class.php` (méthode `postMachine`). Adaptez-y le stockage selon vos besoins : table dédiée, extrafields du tiers, création automatique de tiers, etc.
+```json
+{
+    "unique_id": "TIERS-001",
+    "thirdparty_id": 42,
+    "hostname": "PC-ATLAS",
+    "os": "Windows 10 Pro",
+    "date_creation": 1710000000,
+    "report": { "memory": {"total_bytes": 17179869184, "...": "..."} }
+}
+```
+
+Ces endpoints sont également visibles et testables dans l'**API Explorer** de Dolibarr (`/api/index.php/explorer`).
+
+### Fiche tiers
+
+Un hook affiche automatiquement un bloc « Informations systeme (agent Windows) » sur la fiche du tiers : date du dernier rapport, hostname, OS, mémoire, CPU. La correspondance se fait entre `unique_id` de l'agent et le **code client** du tiers.
+
+## Stockage
+
+Les rapports sont historisés dans la table `llx_systeminfo_reports` (un rapport par envoi : 30 s après le démarrage puis toutes les 4 h par défaut côté agent). Seul le dernier rapport de chaque machine est exposé par les endpoints GET ; adaptez `class/systeminfo_report.class.php` si vous voulez un nettoyage automatique ou des requêtes d'historique.

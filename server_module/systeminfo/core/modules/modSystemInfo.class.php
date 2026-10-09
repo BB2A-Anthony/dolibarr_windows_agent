@@ -22,7 +22,10 @@ class modSystemInfo extends DolibarrModules
         $this->picto = 'globe';
 
         $this->module_parts = array(
-            'api' => array('systeminfo')
+            'api' => array('systeminfo'),
+            'hooks' => array(
+                'thirdpartycard'
+            )
         );
 
         $this->hidden = false;
