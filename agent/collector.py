@@ -80,8 +80,54 @@ def collect_system_info(config):
 
     if winreg is not None:
         info["firewall"] = _firewall_status(winreg)
+        info["updates"] = _update_status()
 
     return info
+
+
+def _update_status():
+    """Query Windows Update status via the COM API."""
+    status = {"available": False}
+    try:
+        import pythoncom
+        import win32com.client
+    except ImportError:
+        return status
+
+    try:
+        pythoncom.CoInitialize()
+        session = win32com.client.Dispatch("Microsoft.Update.Session")
+        searcher = session.CreateUpdateSearcher()
+
+        status["available"] = True
+
+        total = searcher.GetTotalHistoryCount()
+        if total > 0:
+            entries = searcher.QueryHistory(0, 1)
+            if entries.Count > 0:
+                last = entries.Item(0)
+                status["last_update"] = {
+                    "title": last.Title,
+                    "date": str(last.Date),
+                    "result_code": last.ResultCode,
+                }
+        status["history_count"] = total
+
+        result = searcher.Search("IsInstalled=0 and IsHidden=0")
+        status["pending_count"] = result.Updates.Count
+        pending = []
+        for i in range(min(result.Updates.Count, 10)):
+            pending.append(result.Updates.Item(i).Title)
+        status["pending_updates"] = pending
+
+        return status
+    except Exception:
+        return status
+    finally:
+        try:
+            pythoncom.CoUninitialize()
+        except Exception:
+            pass
 
 
 def _firewall_status(winreg):
