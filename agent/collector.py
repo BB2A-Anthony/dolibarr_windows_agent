@@ -77,7 +77,39 @@ def collect_system_info(config):
     }
 
     info["mac_addresses"] = _mac_addresses()
+
+    if winreg is not None:
+        info["firewall"] = _firewall_status(winreg)
+
     return info
+
+
+def _firewall_status(winreg):
+    """Read Windows Firewall state for each profile from the registry."""
+    profiles = {}
+    for profile in ("DomainProfile", "StandardProfile", "PublicProfile"):
+        key_path = (
+            "SYSTEM\\CurrentControlSet\\Services\\SharedAccess"
+            "\\Parameters\\FirewallPolicy\\" + profile
+        )
+        enabled = None
+        try:
+            with winreg.OpenKey(
+                winreg.HKEY_LOCAL_MACHINE, key_path, 0, winreg.KEY_READ | winreg.KEY_WOW64_64KEY
+            ) as key:
+                enabled = bool(winreg.QueryValueEx(key, "EnableFirewall")[0])
+        except OSError:
+            continue
+        if enabled is not None:
+            profiles[profile] = enabled
+
+    if not profiles:
+        return {"available": False}
+    return {
+        "available": True,
+        "enabled": all(profiles.values()),
+        "profiles": profiles,
+    }
 
 
 def _read_windows_details(winreg):
