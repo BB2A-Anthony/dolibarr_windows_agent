@@ -78,44 +78,49 @@ class ActionsSysteminfo
         }
 
         $report = new SysteminfoReport($this->db);
-        $result = $report->fetchLatestBySoc($societe->id);
-        if ($result != 1) {
+        $machines = $report->fetchAllBySoc($societe->id);
+        if (empty($machines)) {
             return 0;
         }
 
-        $data = json_decode($report->report, true);
-        $mem = isset($data['memory']['total_bytes'])
-            ? round($data['memory']['total_bytes'] / 1073741824, 1) . ' Go' : '';
-        $cpu = isset($data['cpu']['count_logical'])
-            ? $data['cpu']['count_logical'] . ' coeurs' : '';
-
         $out = '<!-- Systeminfo -->';
-        $out .= '<div class="fichecenter"><div class="boxe">';
-        $out .= '<table class="border centpercent">';
-        $out .= '<tr class="liste_titre"><th colspan="2">Informations systeme (agent Windows)</th></tr>';
-        $out .= '<tr><td>Dernier rapport</td><td>' . dol_print_date($report->date_creation, 'dayhour') . '</td></tr>';
-        if ($report->hostname) {
-            $out .= '<tr><td>Hostname</td><td>' . dol_escape_htmltag($report->hostname) . '</td></tr>';
+        $out .= '<div class="fichecenter">';
+        foreach ($machines as $machine) {
+            $data = json_decode($machine->report, true);
+            $mem = isset($data['memory']['total_bytes'])
+                ? round($data['memory']['total_bytes'] / 1073741824, 1) . ' Go' : '';
+            $cpu = isset($data['cpu']['count_logical'])
+                ? $data['cpu']['count_logical'] . ' coeurs' : '';
+
+            $out .= '<div class="boxe">';
+            $out .= '<table class="border centpercent">';
+            $title = $machine->hostname ? $machine->hostname : $machine->guid;
+            $out .= '<tr class="liste_titre"><th colspan="2">Informations systeme (agent Windows) — ' . dol_escape_htmltag($title) . '</th></tr>';
+            $out .= '<tr><td>Dernier rapport</td><td>' . dol_print_date($this->db->jdate($machine->date_creation), 'dayhour') . '</td></tr>';
+            if ($machine->hostname) {
+                $out .= '<tr><td>Hostname</td><td>' . dol_escape_htmltag($machine->hostname) . '</td></tr>';
+            }
+            if ($machine->os) {
+                $out .= '<tr><td>OS</td><td>' . dol_escape_htmltag($machine->os) . '</td></tr>';
+            }
+            if ($mem) {
+                $out .= '<tr><td>Memoire</td><td>' . dol_escape_htmltag($mem) . '</td></tr>';
+            }
+            if ($cpu) {
+                $out .= '<tr><td>CPU</td><td>' . dol_escape_htmltag($cpu) . '</td></tr>';
+            }
+            if (!empty($data['public_ip'])) {
+                $out .= '<tr><td>IP publique</td><td>' . dol_escape_htmltag($data['public_ip']) . '</td></tr>';
+            }
+            $isp = isset($data['isp']) ? $data['isp'] : '';
+            $ispName = SysteminfoIspLogo::cleanName($isp);
+            if ($ispName) {
+                $ispLogo = SysteminfoIspLogo::logoUrl($isp);
+                $out .= '<tr><td>FAI</td><td><img src="' . $ispLogo . '" alt="' . dol_escape_htmltag($ispName) . '" style="vertical-align: middle; height: 18px;" /> ' . dol_escape_htmltag($ispName) . '</td></tr>';
+            }
+            $out .= '</table></div>';
         }
-        if ($report->os) {
-            $out .= '<tr><td>OS</td><td>' . dol_escape_htmltag($report->os) . '</td></tr>';
-        }
-        if ($mem) {
-            $out .= '<tr><td>Memoire</td><td>' . dol_escape_htmltag($mem) . '</td></tr>';
-        }
-        if ($cpu) {
-            $out .= '<tr><td>CPU</td><td>' . dol_escape_htmltag($cpu) . '</td></tr>';
-        }
-        if (!empty($data['public_ip'])) {
-            $out .= '<tr><td>IP publique</td><td>' . dol_escape_htmltag($data['public_ip']) . '</td></tr>';
-        }
-        $isp = isset($data['isp']) ? $data['isp'] : '';
-        $ispName = SysteminfoIspLogo::cleanName($isp);
-        if ($ispName) {
-            $ispLogo = SysteminfoIspLogo::logoUrl($isp);
-            $out .= '<tr><td>FAI</td><td><img src="' . $ispLogo . '" alt="' . dol_escape_htmltag($ispName) . '" style="vertical-align: middle; height: 18px;" /> ' . dol_escape_htmltag($ispName) . '</td></tr>';
-        }
-        $out .= '</table></div></div>';
+        $out .= '</div>';
 
         $this->resprints = $out;
         return 0;

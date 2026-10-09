@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8">
-<title>Aperçu - Bloc informations système sur fiche tiers Dolibarr</title>
+<title>Aperçu - Plusieurs machines par tiers</title>
 <style>
 body { font-family: 'Segoe UI', Arial, sans-serif; background: #f3f5f7; margin: 0; padding: 24px; color: #333; }
 .card { background: #fff; border: 1px solid #ccd; border-radius: 4px; max-width: 720px; margin: 0 auto 32px; padding: 20px 24px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
 h1 { font-size: 18px; margin: 0 0 4px; }
 h2 { font-size: 14px; color: #888; font-weight: normal; margin: 0 0 18px; }
-table.border { width: 100%; border-collapse: collapse; }
+table.border { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
 table.border td { border-bottom: 1px solid #e4e8ec; padding: 7px 10px; font-size: 13px; }
 table.border td:first-child { color: #666; width: 160px; background: #fafbfc; }
 tr.liste_titre th { background: #e8ebef; border-bottom: 2px solid #c9ced6; padding: 8px 10px; font-size: 12px; text-align: left; text-transform: uppercase; letter-spacing: .4px; color: #444; }
@@ -17,12 +17,12 @@ tr.liste_titre th { background: #e8ebef; border-bottom: 2px solid #c9ced6; paddi
 <body>
 <div class="card">
   <h1>ACME SAS &nbsp;<span class="tag">Client</span></h1>
-  <h2>Fiche tiers — onglet récapitulatif (aperçu)</h2>
+  <h2>Fiche tiers — 3 machines rattachées à ce tiers</h2>
+  <div class="fichecenter">
   
-    <!-- Systeminfo -->
-    <div class="fichecenter"><div class="boxe">
+    <div class="boxe">
     <table class="border centpercent">
-    <tr class="liste_titre"><th colspan="2">Informations systeme (agent Windows)</th></tr>
+    <tr class="liste_titre"><th colspan="2">Informations systeme (agent Windows) — PC-ATLAS</th></tr>
     <tr><td>Dernier rapport</td><td>09/10/2025 14:32</td></tr>
     <tr><td>Hostname</td><td>PC-ATLAS</td></tr>
     <tr><td>OS</td><td>Windows 11 Pro</td></tr>
@@ -30,25 +30,32 @@ tr.liste_titre th { background: #e8ebef; border-bottom: 2px solid #c9ced6; paddi
     <tr><td>CPU</td><td>8 coeurs</td></tr>
     <tr><td>IP publique</td><td>82.64.152.10</td></tr>
     <tr><td>FAI</td><td><img src="img/isp/orange.svg" alt="Orange" style="vertical-align: middle; height: 18px;" /> Orange</td></tr>
-    </table></div></div>
-  <p class="note">Aperçu du bloc généré par le hook du module systeminfo (machine PC-ATLAS rattachée à ce tiers).</p>
-</div>
-<div class="card">
-  <h1>SCOP Beta &nbsp;<span class="tag">Client</span></h1>
-  <h2>Autre exemple avec un autre FAI</h2>
+    </table></div>
   
-    <!-- Systeminfo -->
-    <div class="fichecenter"><div class="boxe">
+    <div class="boxe">
     <table class="border centpercent">
-    <tr class="liste_titre"><th colspan="2">Informations systeme (agent Windows)</th></tr>
+    <tr class="liste_titre"><th colspan="2">Informations systeme (agent Windows) — LAPTOP-COMPTA</th></tr>
     <tr><td>Dernier rapport</td><td>09/10/2025 14:35</td></tr>
     <tr><td>Hostname</td><td>LAPTOP-COMPTA</td></tr>
     <tr><td>OS</td><td>Windows 10 Pro</td></tr>
     <tr><td>Memoire</td><td>8 Go</td></tr>
     <tr><td>CPU</td><td>4 coeurs</td></tr>
-    <tr><td>IP publique</td><td>78.196.44.2</td></tr>
-    <tr><td>FAI</td><td><img src="img/isp/free.svg" alt="Free SAS" style="vertical-align: middle; height: 18px;" /> Free SAS</td></tr>
-    </table></div></div>
-  <p class="note">Logo Free détecté automatiquement depuis le champ « isp » remonté par l'agent.</p>
+    <tr><td>IP publique</td><td>82.64.152.10</td></tr>
+    <tr><td>FAI</td><td><img src="img/isp/orange.svg" alt="Orange" style="vertical-align: middle; height: 18px;" /> Orange</td></tr>
+    </table></div>
+  
+    <div class="boxe">
+    <table class="border centpercent">
+    <tr class="liste_titre"><th colspan="2">Informations systeme (agent Windows) — SRV-BACKUP</th></tr>
+    <tr><td>Dernier rapport</td><td>09/10/2025 14:30</td></tr>
+    <tr><td>Hostname</td><td>SRV-BACKUP</td></tr>
+    <tr><td>OS</td><td>Windows Server 2022</td></tr>
+    <tr><td>Memoire</td><td>64 Go</td></tr>
+    <tr><td>CPU</td><td>16 coeurs</td></tr>
+    <tr><td>IP publique</td><td>82.64.152.10</td></tr>
+    <tr><td>FAI</td><td><img src="img/isp/orange.svg" alt="Orange" style="vertical-align: middle; height: 18px;" /> Orange</td></tr>
+    </table></div>
+  </div>
+  <p class="note">Un bloc par machine : chaque machine rattachée au tiers (fk_soc) affiche son propre rapport.</p>
 </div>
 </body></html>

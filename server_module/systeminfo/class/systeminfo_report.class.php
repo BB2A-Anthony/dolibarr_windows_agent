@@ -293,6 +293,30 @@ class SysteminfoReport extends CommonObject
     }
 
     /**
+     * Fetch all machines (reports) assigned to a thirdparty.
+     *
+     * @param  int $fk_soc Thirdparty id
+     * @return array Array of report rows (raw objects), empty on error
+     */
+    public function fetchAllBySoc($fk_soc)
+    {
+        $sql = "SELECT rowid, guid, fk_soc, hostname, os, report, date_creation";
+        $sql .= " FROM " . MAIN_DB_PREFIX . $this->table_element;
+        $sql .= " WHERE fk_soc = " . (int) $fk_soc;
+        $sql .= " ORDER BY hostname, guid";
+
+        $rows = array();
+        $resql = $this->db->query($sql);
+        if (!$resql) {
+            return $rows;
+        }
+        while ($obj = $this->db->fetch_object($resql)) {
+            $rows[] = $obj;
+        }
+        return $rows;
+    }
+
+    /**
      * List all machines (one row per machine since save() is an upsert).
      *
      * @param  string $where Optional SQL filter (already sanitized)
