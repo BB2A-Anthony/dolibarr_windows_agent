@@ -1,6 +1,6 @@
 # Dolibarr Windows Agent
 
-Service Windows qui collecte les informations systèmes de la machine et les envoie périodiquement à une API (par exemple un module Dolibarr) via HTTP POST (JSON). Chaque machine est identifiée par un `unique_id` configurable, ce qui permet de rattacher les informations au bon tiers.
+Service Windows qui collecte les informations systèmes de la machine et les envoie périodiquement à une API (par exemple un module Dolibarr) via HTTP POST (JSON). Chaque machine est identifiée par un `guid` configurable, ce qui permet de rattacher les informations au bon tiers.
 
 ## Informations collectées
 
@@ -16,7 +16,7 @@ Service Windows qui collecte les informations systèmes de la machine et les env
 ```json
 {
     "api_url": "https://example.com/api/systeminfo",
-    "unique_id": "REPLACE-WITH-UNIQUE-ID",
+    "guid": "REPLACE-WITH-UNIQUE-ID",
     "api_key": "",
     "initial_delay_seconds": 30,
     "poll_interval_seconds": 14400,
@@ -29,7 +29,7 @@ Service Windows qui collecte les informations systèmes de la machine et les env
 |---|---|
 | `api_url` | URL de l'API qui reçoit les informations |
 | `fk_soc` | ID du tiers Dolibarr (fk_soc) auquel rattacher la machine — à renseigner dans l'agent |
-| `unique_id` | Identifiant de la machine, généré automatiquement (MachineGuid Windows) — ne se configure normalement pas |
+| `guid` | Identifiant de la machine, généré automatiquement (MachineGuid Windows) — ne se configure normalement pas |
 | `api_key` | Clé API Dolibarr de l'utilisateur, envoyée en en-tête `DOLIBARR_API_KEY` (fiche utilisateur Dolibarr > onglet « Interface API » > générer une clé) |
 | `initial_delay_seconds` | Délai avant le premier envoi après démarrage (par défaut 30 s) |
 | `poll_interval_seconds` | Intervalle entre deux envois (par défaut 14400 s = 4 h) |
@@ -40,7 +40,7 @@ Service Windows qui collecte les informations systèmes de la machine et les env
 
 ```json
 {
-    "unique_id": "TIERS-001",
+    "guid": "TIERS-001",
     "hostname": "PC-ATLAS",
     "fqdn": "pc-atlas.local",
     "platform": "Windows",
@@ -94,7 +94,7 @@ Pour un lancement automatique au démarrage de Windows, placer un raccourci de `
     build_exe.bat
     ```
 
-3. Placer `dist\DolibarrWindowsAgent.exe` et `config.json` dans le même dossier (ex. `C:\Agent\`), adapter `config.json` (URL de l'API + `unique_id`).
+3. Placer `dist\DolibarrWindowsAgent.exe` et `config.json` dans le même dossier (ex. `C:\Agent\`), adapter `config.json` (URL de l'API + `guid`).
 
 4. Installer, démarrer, arrêter, désinstaller le service (en administrateur) :
 
@@ -114,19 +114,19 @@ Le service journalise dans `agent_service.log` à côté de l'exécutable.
    - `api_url` : URL de base de votre Dolibarr (ex. `https://dolibarr.mondomaine.com`) — l'agent construit automatiquement les URLs `/api/index.php/...`
    - `api_key` : la clé API Dolibarr
    - `fk_soc` : l'**ID du tiers** Dolibarr à rattacher (visible dans l'URL de la fiche tiers : `socid=...`)
-3. **Endpoint de réception** : installer le module fourni dans [`server_module/systeminfo`](server_module/systeminfo/README.md), qui accepte `POST /api/index.php/systeminfo/machine` et rattache les informations au tiers correspondant au `unique_id`.
+3. **Endpoint de réception** : installer le module fourni dans [`server_module/systeminfo`](server_module/systeminfo/README.md), qui accepte `POST /api/index.php/systeminfo/machine` et rattache les informations au tiers correspondant au `guid`.
 4. **Tester** : bouton « Tester la connexion » dans les paramètres de l'icône (appelle `GET /api/index.php/status`).
 
 L'authentification Dolibarr utilise l'en-tête `DOLIBARR_API_KEY` (pas de Bearer).
 
 ## Côté API (exemple de réception)
 
-L'API doit accepter un `POST` JSON sur `api_url`. Le champ `unique_id` permet de retrouver le tiers correspondant (ex. `GET/POST` sur un module Dolibarr personnalisé). Exemple minimal en PHP :
+L'API doit accepter un `POST` JSON sur `api_url`. Le champ `guid` permet de retrouver le tiers correspondant (ex. `GET/POST` sur un module Dolibarr personnalisé). Exemple minimal en PHP :
 
 ```php
 // api/systeminfo.php
 $payload = json_decode(file_get_contents('php://input'), true);
-$uniqueId = $payload['unique_id']; // clé de correspondance avec le tiers
+$uniqueId = $payload['guid']; // clé de correspondance avec le tiers
 // ...enregistrement en base...
 http_response_code(200);
 ```

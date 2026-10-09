@@ -31,14 +31,14 @@ class Systeminfo extends DolibarrApi
      *
      * @param  array $payload JSON body sent by the agent
      * @return array
-     * @throws RestException 400 Missing unique_id
+     * @throws RestException 400 Missing guid
      */
     public function postMachine($payload)
     {
         global $user;
 
-        if (empty($payload['unique_id'])) {
-            throw new RestException(400, 'Champ unique_id manquant');
+        if (empty($payload['guid'])) {
+            throw new RestException(400, 'Champ guid manquant');
         }
 
         $fk_soc = null;
@@ -55,7 +55,7 @@ class Systeminfo extends DolibarrApi
             ? $payload['os_details']['ProductName'] : '';
 
         $report = new SysteminfoReport($this->db);
-        $report->unique_id = $payload['unique_id'];
+        $report->guid = $payload['guid'];
         $report->fk_soc = $fk_soc;
         $report->hostname = $hostname;
         $report->os = $os;
@@ -140,26 +140,26 @@ class Systeminfo extends DolibarrApi
     }
 
     /**
-     * Get the latest report of one machine by its unique_id.
+     * Get the latest report of one machine by its guid.
      *
-     * @param  string $unique_id Machine identifier
+     * @param  string $guid Machine identifier
      * @return array
      * @throws RestException 404 Unknown machine
      */
-    public function getMachine($unique_id)
+    public function getMachine($guid)
     {
         $report = new SysteminfoReport($this->db);
-        $result = $report->fetchLatest($unique_id);
+        $result = $report->fetchLatest($guid);
         if ($result < 0) {
             throw new RestException(500, 'Erreur base de donnees');
         }
         if ($result == 0) {
-            throw new RestException(404, 'Aucun rapport pour unique_id=' . $unique_id);
+            throw new RestException(404, 'Aucun rapport pour guid=' . $guid);
         }
 
         $row = (object) array(
             'rowid' => $report->id,
-            'unique_id' => $report->unique_id,
+            'guid' => $report->guid,
             'fk_soc' => $report->fk_soc,
             'hostname' => $report->hostname,
             'os' => $report->os,
@@ -175,7 +175,7 @@ class Systeminfo extends DolibarrApi
     private function _formatRow($obj)
     {
         return array(
-            'unique_id' => $obj->unique_id,
+            'guid' => $obj->guid,
             'thirdparty_id' => $obj->fk_soc,
             'hostname' => $obj->hostname,
             'os' => $obj->os,

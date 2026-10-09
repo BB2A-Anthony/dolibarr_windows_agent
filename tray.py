@@ -83,7 +83,7 @@ def open_settings(controller, on_saved=None):
     ttk.Label(frame, text="ID du tiers (fk_soc) :").grid(row=2, column=0, sticky="w", pady=4)
     id_var = tk.StringVar(value=str(controller.config.get("fk_soc", "")))
     ttk.Entry(frame, textvariable=id_var, width=50).grid(row=2, column=1, pady=4)
-    machine_var = tk.StringVar(value="Machine : " + controller.config.get("unique_id", ""))
+    machine_var = tk.StringVar(value="Machine : " + controller.config.get("guid", ""))
     ttk.Label(frame, textvariable=machine_var, foreground="gray").grid(
         row=5, column=0, columnspan=2, sticky="w", pady=(4, 0)
     )

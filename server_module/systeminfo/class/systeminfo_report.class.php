@@ -14,7 +14,7 @@ class SysteminfoReport extends CommonObject
      */
     public $db;
 
-    public $unique_id;
+    public $guid;
     public $fk_soc;
     public $hostname;
     public $os;
@@ -22,7 +22,7 @@ class SysteminfoReport extends CommonObject
     public $date_creation;
 
     /**
-     * Save a report: update the existing row for this machine (unique_id),
+     * Save a report: update the existing row for this machine (guid),
      * or create it on first report (upsert, one row per machine).
      *
      * @return int Row id (< 0 on error)
@@ -30,7 +30,7 @@ class SysteminfoReport extends CommonObject
     public function save($user)
     {
         $existing = new SysteminfoReport($this->db);
-        $found = $existing->fetchLatest($this->unique_id);
+        $found = $existing->fetchLatest($this->guid);
         if ($found < 0) {
             return -1;
         }
@@ -54,9 +54,9 @@ class SysteminfoReport extends CommonObject
         }
 
         $sql = "INSERT INTO " . MAIN_DB_PREFIX . $this->table_element;
-        $sql .= " (unique_id, fk_soc, hostname, os, report, date_creation)";
+        $sql .= " (guid, fk_soc, hostname, os, report, date_creation)";
         $sql .= " VALUES (";
-        $sql .= "'" . $this->db->escape($this->unique_id) . "', ";
+        $sql .= "'" . $this->db->escape($this->guid) . "', ";
         $sql .= ($this->fk_soc > 0 ? (int) $this->fk_soc : 'NULL') . ", ";
         $sql .= ($this->hostname ? "'" . $this->db->escape($this->hostname) . "'" : 'NULL') . ", ";
         $sql .= ($this->os ? "'" . $this->db->escape($this->os) . "'" : 'NULL') . ", ";
@@ -71,16 +71,16 @@ class SysteminfoReport extends CommonObject
     }
 
     /**
-     * Fetch the latest report for a given unique_id.
+     * Fetch the latest report for a given guid.
      *
-     * @param  string $unique_id Machine identifier
+     * @param  string $guid Machine identifier
      * @return int    1 if found, 0 if not found, < 0 on error
      */
-    public function fetchLatest($unique_id)
+    public function fetchLatest($guid)
     {
-        $sql = "SELECT rowid, unique_id, fk_soc, hostname, os, report, date_creation";
+        $sql = "SELECT rowid, guid, fk_soc, hostname, os, report, date_creation";
         $sql .= " FROM " . MAIN_DB_PREFIX . $this->table_element;
-        $sql .= " WHERE unique_id = '" . $this->db->escape($unique_id) . "'";
+        $sql .= " WHERE guid = '" . $this->db->escape($guid) . "'";
         $sql .= " ORDER BY date_creation DESC, rowid DESC";
         $sql .= " LIMIT 1";
 
@@ -94,7 +94,7 @@ class SysteminfoReport extends CommonObject
         }
 
         $this->id = $obj->rowid;
-        $this->unique_id = $obj->unique_id;
+        $this->guid = $obj->guid;
         $this->fk_soc = $obj->fk_soc;
         $this->hostname = $obj->hostname;
         $this->os = $obj->os;
@@ -111,7 +111,7 @@ class SysteminfoReport extends CommonObject
      */
     public function fetchLatestBySoc($fk_soc)
     {
-        $sql = "SELECT rowid, unique_id, fk_soc, hostname, os, report, date_creation";
+        $sql = "SELECT rowid, guid, fk_soc, hostname, os, report, date_creation";
         $sql .= " FROM " . MAIN_DB_PREFIX . $this->table_element;
         $sql .= " WHERE fk_soc = " . (int) $fk_soc;
         $sql .= " ORDER BY date_creation DESC, rowid DESC";
@@ -127,7 +127,7 @@ class SysteminfoReport extends CommonObject
         }
 
         $this->id = $obj->rowid;
-        $this->unique_id = $obj->unique_id;
+        $this->guid = $obj->guid;
         $this->fk_soc = $obj->fk_soc;
         $this->hostname = $obj->hostname;
         $this->os = $obj->os;
@@ -143,9 +143,9 @@ class SysteminfoReport extends CommonObject
      */
     public function listLatestPerMachine()
     {
-        $sql = "SELECT rowid, unique_id, fk_soc, hostname, os, report, date_creation";
+        $sql = "SELECT rowid, guid, fk_soc, hostname, os, report, date_creation";
         $sql .= " FROM " . MAIN_DB_PREFIX . $this->table_element;
-        $sql .= " ORDER BY unique_id";
+        $sql .= " ORDER BY guid";
 
         $rows = array();
         $resql = $this->db->query($sql);

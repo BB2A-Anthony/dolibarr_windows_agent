@@ -8,7 +8,7 @@ Ce module reçoit les informations systèmes de l'agent Windows et permet de les
 |---|---|---|
 | `POST` | `/api/index.php/systeminfo/machine` | L'agent y envoie son rapport (authentifié par `DOLIBARR_API_KEY`) |
 | `GET` | `/api/index.php/systeminfo/machine` | Dernier rapport de **chaque machine** connue |
-| `GET` | `/api/index.php/systeminfo/machine/{unique_id}` | Dernier rapport d'**une machine** par identifiant unique |
+| `GET` | `/api/index.php/systeminfo/machine/{guid}` | Dernier rapport d'**une machine** par identifiant unique |
 
 ## Installation
 
@@ -37,7 +37,7 @@ Exemple de réponse :
 
 ```json
 {
-    "unique_id": "TIERS-001",
+    "guid": "TIERS-001",
     "thirdparty_id": 42,
     "hostname": "PC-ATLAS",
     "os": "Windows 10 Pro",
@@ -50,8 +50,8 @@ Ces endpoints sont également visibles et testables dans l'**API Explorer** de D
 
 ### Fiche tiers
 
-Un hook affiche automatiquement un bloc « Informations systeme (agent Windows) » sur la fiche du tiers : date du dernier rapport, hostname, OS, mémoire, CPU. La correspondance se fait entre `unique_id` de l'agent et le **code client** du tiers.
+Un hook affiche automatiquement un bloc « Informations systeme (agent Windows) » sur la fiche du tiers : date du dernier rapport, hostname, OS, mémoire, CPU. La correspondance se fait entre `guid` de l'agent et le **code client** du tiers.
 
 ## Stockage
 
-Les rapports sont historisés dans la table `llx_systeminfo_reports` (un rapport par envoi : 30 s après le démarrage puis toutes les 4 h par défaut côté agent). Seul le dernier rapport de chaque machine est exposé par les endpoints GET ; adaptez `class/systeminfo_report.class.php` si vous voulez un nettoyage automatique ou des requêtes d'historique.
+**Une seule ligne par machine** dans la table `llx_systeminfo_reports` : à chaque envoi (30 s après le démarrage puis toutes les 4 h), le module met à jour l'enregistrement existant de la machine (`guid`) — `fk_soc`, hostname, OS, rapport JSON et date — ou le crée s'il s'agit du premier rapport. La colonne `guid` est `UNIQUE` pour garantir l'unicité.

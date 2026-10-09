@@ -8,7 +8,7 @@ import psutil
 def collect_system_info(config):
     """Collect Windows system information to report to the API."""
     info = {
-        "unique_id": config["unique_id"],
+        "guid": config["guid"],
         "fk_soc": config.get("fk_soc"),
         "hostname": socket.gethostname(),
         "fqdn": socket.getfqdn(),
