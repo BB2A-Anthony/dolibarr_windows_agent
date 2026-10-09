@@ -118,6 +118,12 @@ class ActionsSysteminfo
                 $ispLogo = SysteminfoIspLogo::logoUrl($isp);
                 $out .= '<tr><td>FAI</td><td><img src="' . $ispLogo . '" alt="' . dol_escape_htmltag($ispName) . '" style="vertical-align: middle; height: 18px;" /> ' . dol_escape_htmltag($ispName) . '</td></tr>';
             }
+            $tv = isset($data['teamviewer']) ? $data['teamviewer'] : array();
+            if (!empty($tv['installed'])) {
+                $tvId = !empty($tv['id']) ? $tv['id'] : 'ID inconnu';
+                $tvVersion = !empty($tv['version']) ? ' (v' . $tv['version'] . ')' : '';
+                $out .= '<tr><td>TeamViewer</td><td><strong>' . dol_escape_htmltag($tvId) . '</strong>' . dol_escape_htmltag($tvVersion) . '</td></tr>';
+            }
             $out .= '</table></div>';
         }
         $out .= '</div>';

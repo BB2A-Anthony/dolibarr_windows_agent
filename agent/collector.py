@@ -93,8 +93,32 @@ def collect_system_info(config):
         info["firewall"] = _firewall_status(winreg)
         info["updates"] = _update_status()
         info["installed_softwares"] = _installed_softwares(winreg)
+        info["teamviewer"] = _teamviewer_id(winreg)
 
     return info
+
+
+def _teamviewer_id(winreg):
+    """Read the TeamViewer ID and version from the registry, if installed."""
+    result = {"installed": False, "id": None, "version": None}
+    for root_path, access in (
+        ("SOFTWARE\\WOW6432Node\\TeamViewer", winreg.KEY_READ | winreg.KEY_WOW64_32KEY),
+        ("SOFTWARE\\TeamViewer", winreg.KEY_READ | winreg.KEY_WOW64_64KEY),
+    ):
+        try:
+            key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, root_path, 0, access)
+        except OSError:
+            continue
+        with key:
+            result["installed"] = True
+            for value_name, field in (("ClientID", "id"), ("Version", "version")):
+                try:
+                    result[field] = winreg.QueryValueEx(key, value_name)[0]
+                except OSError:
+                    continue
+            if result["id"]:
+                break
+    return result
 
 
 def _installed_softwares(winreg):

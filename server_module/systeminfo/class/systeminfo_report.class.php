@@ -56,6 +56,8 @@ class SysteminfoReport extends CommonObject
         'pending_updates' => 'int',
         'last_update_date' => 'date',
         'softwares_missing' => 'int',
+        'teamviewer_installed' => 'int',
+        'teamviewer_id' => 'string',
     );
 
     /**
@@ -144,6 +146,10 @@ class SysteminfoReport extends CommonObject
             }
         }
         $this->softwares_missing = $missing;
+
+        $tv = isset($payload['teamviewer']) ? $payload['teamviewer'] : array();
+        $this->teamviewer_installed = isset($tv['installed']) ? (int) $tv['installed'] : null;
+        $this->teamviewer_id = isset($tv['id']) ? (string) $tv['id'] : null;
     }
 
     /**

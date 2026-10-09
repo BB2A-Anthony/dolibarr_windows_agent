@@ -47,6 +47,10 @@ CREATE TABLE llx_systeminfo_reports (
     -- Software check (dictionary match summary)
     softwares_missing integer DEFAULT NULL,
 
+    -- Remote access
+    teamviewer_installed tinyint DEFAULT NULL,
+    teamviewer_id       varchar(32) DEFAULT NULL,
+
     -- Raw JSON payload and timestamps
     report            text,
     date_creation     datetime DEFAULT NULL,
