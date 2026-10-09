@@ -1,6 +1,8 @@
 <?php
 /**
- * Hooks: display the machine's latest system report on the thirdparty card.
+ * Hooks: thirdparty card — display machine report block and an
+ * "Add machine" button that generates a one-time enrollment code
+ * (valid 5 minutes) to be entered in the agent.
  */
 require_once __DIR__ . '/systeminfo_report.class.php';
 
@@ -11,9 +13,6 @@ class ActionsSysteminfo
      */
     public $db;
 
-    /**
-     * @var array Hook results
-     */
     public $resprints = '';
 
     public $results = array();
@@ -24,7 +23,43 @@ class ActionsSysteminfo
     }
 
     /**
-     * Add a system info block on the thirdparty card.
+     * Generate a one-time enrollment code for this thirdparty.
+     *
+     * @param  array $parameters Hook context ('socid' or 'object')
+     * @return int
+     */
+    public function createEnrollCode($parameters)
+    {
+        $socid = 0;
+        if (!empty($parameters['socid'])) {
+            $socid = (int) $parameters['socid'];
+        } elseif (!empty($parameters['object']->id)) {
+            $socid = (int) $parameters['object']->id;
+        }
+        if (empty($socid)) {
+            $this->results['error'] = 'Tiers inconnu';
+            return -1;
+        }
+
+        $code = strtoupper(substr(md5(uniqid('', true) . $socid), 0, 8));
+        $validity = 5 * 60;
+
+        $sql = "INSERT INTO " . MAIN_DB_PREFIX . "systeminfo_enroll";
+        $sql .= " (code, fk_soc, date_valid, used)";
+        $sql .= " VALUES ('" . $this->db->escape($code) . "', " . $socid;
+        $sql .= ", '" . $this->db->idate(dol_now() + $validity) . "', 0)";
+        if (!$this->db->query($sql)) {
+            $this->results['error'] = $this->db->lasterror();
+            return -1;
+        }
+
+        $this->results['code'] = $code;
+        $this->results['validity'] = $validity;
+        return 1;
+    }
+
+    /**
+     * Add the system info block on the thirdparty card.
      *
      * @param  array $parameters Hook context ('object' => Societe)
      * @return int

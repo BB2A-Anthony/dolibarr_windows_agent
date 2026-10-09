@@ -37,7 +37,9 @@ class modSystemInfo extends DolibarrModules
 
         $this->hidden = false;
         $this->const = array();
-        $this->tabs = array();
+        $this->tabs = array(
+            'thirdparty:+agent:Ajouter une machine (agent):systeminfo@systeminfo:/custom/systeminfo/enroll_card.php?socid=__ID__'
+        );
         $this->rights = array();
 
         $this->dictionaries = array(

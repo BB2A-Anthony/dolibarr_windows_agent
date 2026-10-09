@@ -115,6 +115,42 @@ def enroll(config, token, config_path):
         return False, "Délai d'attente dépassé."
 
 
+def enroll_soc(config, code, config_path):
+    """Link this machine to a thirdparty using a one-time code (5 min valid)
+    generated on the thirdparty card. Returns (ok, message)."""
+    base = config["api_url"].rstrip("/")
+    if "/api/index.php" in base:
+        base = base.split("/api/index.php")[0]
+    url = base + "/custom/systeminfo/enroll_soc.php"
+    try:
+        resp = requests.post(
+            url,
+            json={"code": code.strip(), "guid": config.get("guid")},
+            timeout=config.get("timeout_seconds", 30),
+            verify=config.get("verify_ssl", True),
+        )
+        if resp.status_code != 200:
+            try:
+                message = resp.json().get("error", resp.reason)
+            except ValueError:
+                message = resp.reason
+            return False, "Enrôlement tiers échoué : {}".format(message)
+        data = resp.json()
+        fk_soc = data.get("thirdparty_id")
+        if not fk_soc:
+            return False, "Réponse invalide du serveur."
+        config["fk_soc"] = fk_soc
+        with open(config_path, "w", encoding="utf-8") as f:
+            json.dump(config, f, indent=4)
+        return True, "Machine rattachée au tiers #{}.".format(fk_soc)
+    except requests.exceptions.SSLError:
+        return False, "Erreur de certificat SSL."
+    except requests.exceptions.ConnectionError:
+        return False, "Impossible de joindre le serveur (URL incorrecte ?)."
+    except requests.exceptions.Timeout:
+        return False, "Délai d'attente dépassé."
+
+
 def test_connection(config):
     """Ping the Dolibarr status endpoint. Returns (ok, message)."""
     try:

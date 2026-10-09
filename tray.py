@@ -4,7 +4,7 @@ import os
 import threading
 
 from agent.crypto import decrypt
-from agent.sender import enroll, get_api_key, load_config, send_report, test_connection
+from agent.sender import enroll, enroll_soc, get_api_key, load_config, send_report, test_connection
 
 CONFIG_PATH = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "config.json"
@@ -89,6 +89,16 @@ def open_settings(controller, on_saved=None):
         ).grid(row=2, column=0, columnspan=2, sticky="w", pady=(2, 0))
         row = 3
 
+    ttk.Label(frame, text="Code d'enrôlement tiers (optionnel) :").grid(row=row, column=0, sticky="w", pady=4)
+    soc_var = tk.StringVar()
+    ttk.Entry(frame, textvariable=soc_var, width=50).grid(row=row, column=1, pady=4)
+    ttk.Label(
+        frame,
+        text="Code généré sur la fiche du tiers (bouton Ajouter une machine), valable 5 min.\nLie cette machine au tiers lors de la première connexion.",
+        foreground="gray", justify="left",
+    ).grid(row=row + 1, column=0, columnspan=2, sticky="w", pady=(2, 0))
+    row += 2
+
     ttk.Label(frame, text="Machine (guid) :", anchor="w").grid(row=row, column=0, sticky="w", pady=4)
     ttk.Label(frame, text=controller.config.get("guid", ""), foreground="gray").grid(row=row, column=1, sticky="w", pady=4)
     row += 1
@@ -126,6 +136,14 @@ def open_settings(controller, on_saved=None):
             root.destroy()
             return
         controller.save(api_url)
+        soc_code = soc_var.get().strip()
+        if soc_code:
+            status_var.set("Enrôlement tiers en cours...")
+            root.update_idletasks()
+            ok, message = enroll_soc(controller.config, soc_code, controller.config_path)
+            if not ok:
+                status_var.set("Échec enrôlement tiers - " + message)
+                return
         if on_saved:
             on_saved()
         messagebox.showinfo("Enregistré", "Paramètres enregistrés.", parent=root)
