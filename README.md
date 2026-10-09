@@ -66,6 +66,16 @@ REM Envoi en boucle (toutes les poll_interval_seconds)
 python run.py --config config.json --loop
 ```
 
+## Icône barre des tâches (system tray)
+
+Lancer `tray.py` (ou l'exécutable `DolibarrAgentTray.exe`) pour afficher une icône dans la barre des tâches :
+
+- **Envoyer maintenant** : envoie immédiatement un rapport
+- **Paramètres (URL / Identifiant)...** : fenêtre pour modifier l'URL de l'API et l'identifiant unique (enregistrés dans `config.json` et pris en compte sans redémarrage)
+- **Quitter** : arrête l'agent et l'icône
+
+Pour un lancement automatique au démarrage de Windows, placer un raccourci de `DolibarrAgentTray.exe` dans le dossier Démarrage (`shell:startup`).
+
 ## Installation comme service Windows
 
 1. Installer les dépendances :
