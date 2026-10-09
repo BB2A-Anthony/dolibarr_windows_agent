@@ -54,14 +54,13 @@ class Systeminfo extends DolibarrApi
         $os = isset($payload['os_details']['ProductName'])
             ? $payload['os_details']['ProductName'] : '';
 
-        $report = new SysteminfoReport($this->db);
-        $report->guid = $payload['guid'];
-        $report->fk_soc = $fk_soc;
-        $report->hostname = $hostname;
-        $report->os = $os;
         $payload['softwares'] = $this->_matchSoftwares(
             isset($payload['installed_softwares']) ? $payload['installed_softwares'] : array()
         );
+
+        $report = new SysteminfoReport($this->db);
+        $report->guid = $payload['guid'];
+        $report->setFromPayload($payload);
         $report->report = json_encode($payload);
         $id = $report->save($user);
 
@@ -126,12 +125,27 @@ class Systeminfo extends DolibarrApi
     /**
      * Get the latest report of each known machine.
      *
+     * Optional SQL filter on metric columns, e.g.:
+     *   GET /systeminfo/machine?sqlfilters=(t.firewall_enabled:=:0)
+     *   GET /systeminfo/machine?sqlfilters=(t.pending_updates:>:0)
+     *
+     * @param  string $sqlfilters Filter syntax (Dolibarr standard)
      * @return array
+     * @throws RestException 400 Invalid filter
      */
-    public function indexMachine()
+    public function indexMachine($sqlfilters = '')
     {
+        $where = '';
+        if ($sqlfilters) {
+            try {
+                $where = $this->db->sanitizeSqlFilter($sqlfilters);
+            } catch (Exception $e) {
+                throw new RestException(400, 'Filtre invalide: ' . $e->getMessage());
+            }
+        }
+
         $report = new SysteminfoReport($this->db);
-        $rows = $report->listLatestPerMachine();
+        $rows = $report->listLatestPerMachine($where);
         $out = array();
         foreach ($rows as $obj) {
             $out[] = $this->_formatRow($obj);
@@ -170,11 +184,11 @@ class Systeminfo extends DolibarrApi
     }
 
     /**
-     * Format a report row for API output.
+     * Format a report row for API output, with each metric as a field.
      */
     private function _formatRow($obj)
     {
-        return array(
+        $row = array(
             'guid' => $obj->guid,
             'thirdparty_id' => $obj->fk_soc,
             'hostname' => $obj->hostname,
@@ -182,5 +196,14 @@ class Systeminfo extends DolibarrApi
             'date_creation' => $obj->date_creation,
             'report' => json_decode($obj->report, true),
         );
+        foreach (SysteminfoReport::$columns as $col => $type) {
+            if ($col == 'fk_soc') {
+                continue;
+            }
+            if (isset($obj->$col)) {
+                $row[$col] = $obj->$col;
+            }
+        }
+        return $row;
     }
 }
