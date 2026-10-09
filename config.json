@@ -1,0 +1,8 @@
+{
+    "api_url": "https://example.com/api/systeminfo",
+    "unique_id": "REPLACE-WITH-UNIQUE-ID",
+    "api_key": "",
+    "poll_interval_seconds": 300,
+    "timeout_seconds": 30,
+    "verify_ssl": true
+}
