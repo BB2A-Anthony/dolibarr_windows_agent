@@ -95,8 +95,39 @@ def collect_system_info(config):
         info["installed_softwares"] = _installed_softwares(winreg)
         info["teamviewer"] = _teamviewer_id(winreg)
         info["rustdesk"] = _rustdesk_id(winreg)
+        info["anydesk"] = _anydesk_id(winreg)
 
     return info
+
+
+def _anydesk_id(winreg):
+    """Read the AnyDesk ID from the registry, if installed.
+
+    AnyDesk names its config value 'ad_<id>' in HKLM\SOFTWARE\AnyDesk,
+    so the ID is recovered from the value name itself.
+    """
+    result = {"installed": False, "id": None}
+    for root_path, access in (
+        ("SOFTWARE\\AnyDesk", winreg.KEY_READ | winreg.KEY_WOW64_64KEY),
+        ("SOFTWARE\\WOW6432Node\\AnyDesk", winreg.KEY_READ | winreg.KEY_WOW64_32KEY),
+    ):
+        try:
+            key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, root_path, 0, access)
+        except OSError:
+            continue
+        with key:
+            result["installed"] = True
+            for i in range(winreg.QueryInfoKey(key)[1]):
+                try:
+                    value_name = winreg.EnumValue(key, i)[0]
+                except OSError:
+                    continue
+                if value_name.startswith("ad_") and value_name[3:].isdigit():
+                    result["id"] = value_name[3:]
+                    break
+            if result["id"]:
+                break
+    return result
 
 
 def _rustdesk_id(winreg):

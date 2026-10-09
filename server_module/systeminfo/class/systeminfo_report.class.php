@@ -60,6 +60,8 @@ class SysteminfoReport extends CommonObject
         'teamviewer_id' => 'string',
         'rustdesk_installed' => 'int',
         'rustdesk_id' => 'string',
+        'anydesk_installed' => 'int',
+        'anydesk_id' => 'string',
     );
 
     /**
@@ -156,6 +158,10 @@ class SysteminfoReport extends CommonObject
         $rd = isset($payload['rustdesk']) ? $payload['rustdesk'] : array();
         $this->rustdesk_installed = isset($rd['installed']) ? (int) $rd['installed'] : null;
         $this->rustdesk_id = isset($rd['id']) ? (string) $rd['id'] : null;
+
+        $ad = isset($payload['anydesk']) ? $payload['anydesk'] : array();
+        $this->anydesk_installed = isset($ad['installed']) ? (int) $ad['installed'] : null;
+        $this->anydesk_id = isset($ad['id']) ? (string) $ad['id'] : null;
     }
 
     /**

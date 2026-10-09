@@ -129,6 +129,11 @@ class ActionsSysteminfo
                 $rdId = !empty($rd['id']) ? $rd['id'] : 'ID inconnu';
                 $out .= '<tr><td>RustDesk</td><td><strong>' . dol_escape_htmltag($rdId) . '</strong></td></tr>';
             }
+            $ad = isset($data['anydesk']) ? $data['anydesk'] : array();
+            if (!empty($ad['installed'])) {
+                $adId = !empty($ad['id']) ? $ad['id'] : 'ID inconnu';
+                $out .= '<tr><td>AnyDesk</td><td><strong>' . dol_escape_htmltag($adId) . '</strong></td></tr>';
+            }
             $out .= '</table></div>';
         }
         $out .= '</div>';
