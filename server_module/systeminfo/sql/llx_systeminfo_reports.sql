@@ -33,6 +33,7 @@ CREATE TABLE llx_systeminfo_reports (
 
     -- Network
     ip_address        varchar(64) DEFAULT NULL,
+    public_ip         varchar(64) DEFAULT NULL,
     mac_address       varchar(32) DEFAULT NULL,
 
     -- Firewall
@@ -52,6 +53,7 @@ CREATE TABLE llx_systeminfo_reports (
 
     INDEX idx_systeminfo_reports_fk_soc (fk_soc),
     INDEX idx_systeminfo_reports_hostname (hostname),
+    INDEX idx_systeminfo_reports_public_ip (public_ip),
     INDEX idx_systeminfo_reports_pending_updates (pending_updates),
     INDEX idx_systeminfo_reports_firewall (firewall_enabled)
 ) ENGINE=innodb;

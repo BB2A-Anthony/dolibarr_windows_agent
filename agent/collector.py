@@ -3,6 +3,13 @@ import socket
 import uuid
 
 import psutil
+import requests
+
+PUBLIC_IP_SERVICES = (
+    "https://api.ipify.org",
+    "https://ifconfig.me/ip",
+    "https://icanhazip.com",
+)
 
 
 def collect_system_info(config):
@@ -77,6 +84,7 @@ def collect_system_info(config):
     }
 
     info["mac_addresses"] = _mac_addresses()
+    info["public_ip"] = _public_ip()
 
     if winreg is not None:
         info["firewall"] = _firewall_status(winreg)
@@ -219,6 +227,20 @@ def _read_windows_details(winreg):
 
 def _windows_edition(winreg):
     return _read_windows_details(winreg).get("ProductName", platform.platform())
+
+
+def _public_ip():
+    """Fetch the public IP from an external service (best effort, short timeout)."""
+    for service in PUBLIC_IP_SERVICES:
+        try:
+            resp = requests.get(service, timeout=5)
+            if resp.status_code == 200:
+                ip = resp.text.strip()
+                if ip:
+                    return ip
+        except requests.RequestException:
+            continue
+    return None
 
 
 def _mac_addresses():
