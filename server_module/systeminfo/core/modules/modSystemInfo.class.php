@@ -8,14 +8,10 @@ class modSystemInfo extends DolibarrModules
 {
     /**
      * Technical user created by the module for the Windows agent.
+     * Its password is random and never stored: the agent only uses
+     * the API key (DOLIBARR_API_KEY header).
      */
     const AGENT_LOGIN = 'useragent';
-
-    /**
-     * Fixed complex password for the technical agent user.
-     * Change it here before activating the module if you want your own.
-     */
-    const AGENT_PASSWORD = 'Ag3nt!D0l1b4rr#SysInfo$2024';
 
     public function __construct($db)
     {
@@ -97,8 +93,8 @@ class modSystemInfo extends DolibarrModules
     }
 
     /**
-     * Create (or keep) the technical user 'useragent' with the fixed
-     * complex password and an API key for REST calls.
+     * Create the technical user 'useragent' with a random password
+     * (never stored anywhere) and an API key for REST calls.
      *
      * @return int 1 OK, 0 nothing to do, < 0 KO
      */
@@ -114,13 +110,18 @@ class modSystemInfo extends DolibarrModules
         $apikey = '';
         if ($result > 0 && !empty($tmpuser->api_key)) {
             $apikey = $tmpuser->api_key;
-        } elseif (empty($apikey)) {
+        } else {
             $apikey = dol_trunc(uniqid('', true) . uniqid('', true), 40, 'right', 'UTF-8', false);
         }
 
+        // Random one-time password: only used to satisfy Dolibarr's
+        // password policy at creation, discarded right after, never stored.
+        $randomPassword = dol_get_random(4, 4)
+            . strtoupper(dol_get_random(2, 2))
+            . dol_get_random(2, 2) . '!' . dol_get_random(2, 2) . '#';
+
         if ($result > 0) {
-            // User exists: reset the fixed password, keep or (re)generate the API key.
-            $tmpuser->pass = self::AGENT_PASSWORD;
+            // User exists: only (re)set the API key, never touch the password.
             $tmpuser->api_key = $apikey;
             if ($tmpuser->update($tmpuser->id, $user, 0, 0, 1) < 0) {
                 $this->error = $tmpuser->error;
@@ -130,7 +131,7 @@ class modSystemInfo extends DolibarrModules
             $tmpuser->login = self::AGENT_LOGIN;
             $tmpuser->lastname = 'Agent';
             $tmpuser->firstname = 'Systeminfo';
-            $tmpuser->pass = self::AGENT_PASSWORD;
+            $tmpuser->pass = $randomPassword;
             $tmpuser->api_key = $apikey;
             $tmpuser->admin = 0;
             $tmpuser->entity = 0;
@@ -140,6 +141,8 @@ class modSystemInfo extends DolibarrModules
                 return -1;
             }
         }
+        $randomPassword = '';
+        unset($randomPassword);
 
         // Store the API key in module config so the admin can copy it
         // for the agent config.json (visible in the module constants page).
