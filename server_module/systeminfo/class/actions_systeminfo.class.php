@@ -5,6 +5,7 @@
  * (valid 5 minutes) to be entered in the agent.
  */
 require_once __DIR__ . '/systeminfo_report.class.php';
+require_once __DIR__ . '/isp_logo.class.php';
 
 class ActionsSysteminfo
 {
@@ -104,6 +105,15 @@ class ActionsSysteminfo
         }
         if ($cpu) {
             $out .= '<tr><td>CPU</td><td>' . dol_escape_htmltag($cpu) . '</td></tr>';
+        }
+        if (!empty($data['public_ip'])) {
+            $out .= '<tr><td>IP publique</td><td>' . dol_escape_htmltag($data['public_ip']) . '</td></tr>';
+        }
+        $isp = isset($data['isp']) ? $data['isp'] : '';
+        $ispName = SysteminfoIspLogo::cleanName($isp);
+        if ($ispName) {
+            $ispLogo = SysteminfoIspLogo::logoUrl($isp);
+            $out .= '<tr><td>FAI</td><td><img src="' . $ispLogo . '" alt="' . dol_escape_htmltag($ispName) . '" style="vertical-align: middle; height: 18px;" /> ' . dol_escape_htmltag($ispName) . '</td></tr>';
         }
         $out .= '</table></div></div>';
 
