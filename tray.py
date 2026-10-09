@@ -52,9 +52,8 @@ class AgentController:
     def test(self):
         return test_connection(self.config)
 
-    def save(self, api_url, api_key):
+    def save(self, api_url):
         self.config["api_url"] = api_url
-        self.config["api_key"] = api_key
         with open(self.config_path, "w", encoding="utf-8") as f:
             json.dump(self.config, f, indent=4)
 
@@ -75,20 +74,15 @@ def open_settings(controller, on_saved=None):
     url_var = tk.StringVar(value=controller.config.get("api_url", ""))
     ttk.Entry(frame, textvariable=url_var, width=50).grid(row=0, column=1, pady=4)
 
-    ttk.Label(frame, text="Clé API Dolibarr :").grid(row=1, column=0, sticky="w", pady=4)
-    key_var = tk.StringVar(value=controller.config.get("api_key", ""))
-    ttk.Entry(frame, textvariable=key_var, width=50, show="*").grid(row=1, column=1, pady=4)
-
-    ttk.Label(frame, text="Machine (guid) :", anchor="w").grid(row=2, column=0, sticky="w", pady=4)
-    ttk.Label(frame, text=controller.config.get("guid", ""), foreground="gray").grid(row=2, column=1, sticky="w", pady=4)
+    ttk.Label(frame, text="Machine (guid) :", anchor="w").grid(row=1, column=0, sticky="w", pady=4)
+    ttk.Label(frame, text=controller.config.get("guid", ""), foreground="gray").grid(row=1, column=1, sticky="w", pady=4)
     status_var = tk.StringVar()
     ttk.Label(frame, textvariable=status_var, foreground="gray").grid(
-        row=3, column=0, columnspan=2, sticky="w", pady=(8, 0)
+        row=2, column=0, columnspan=2, sticky="w", pady=(8, 0)
     )
 
     def do_test():
         controller.config["api_url"] = url_var.get().strip()
-        controller.config["api_key"] = key_var.get().strip()
         status_var.set("Test en cours...")
         root.update_idletasks()
         ok, message = controller.test()
@@ -96,11 +90,10 @@ def open_settings(controller, on_saved=None):
 
     def save_and_close():
         api_url = url_var.get().strip()
-        api_key = key_var.get().strip()
         if not api_url:
             messagebox.showwarning("Champ requis", "L'URL est obligatoire.", parent=root)
             return
-        controller.save(api_url, api_key)
+        controller.save(api_url)
         if on_saved:
             on_saved()
         messagebox.showinfo("Enregistré", "Paramètres enregistrés.", parent=root)
