@@ -63,7 +63,7 @@ class Systeminfo extends DolibarrApi
             isset($payload['installed_softwares']) ? $payload['installed_softwares'] : array()
         );
         $report->report = json_encode($payload);
-        $id = $report->create($user);
+        $id = $report->save($user);
 
         if ($id < 0) {
             throw new RestException(500, 'Erreur lors de l\'enregistrement du rapport');

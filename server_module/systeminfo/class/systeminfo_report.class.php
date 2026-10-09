@@ -22,16 +22,36 @@ class SysteminfoReport extends CommonObject
     public $date_creation;
 
     /**
-     * Save a report row (history is kept).
+     * Save a report: update the existing row for this machine (unique_id),
+     * or create it on first report (upsert, one row per machine).
      *
      * @return int Row id (< 0 on error)
      */
-    public function create($user)
+    public function save($user)
     {
-        $error = 0;
+        $existing = new SysteminfoReport($this->db);
+        $found = $existing->fetchLatest($this->unique_id);
+        if ($found < 0) {
+            return -1;
+        }
+
         $now = dol_now();
 
-        $this->db->begin();
+        if ($found == 1) {
+            $sql = "UPDATE " . MAIN_DB_PREFIX . $this->table_element . " SET";
+            $sql .= " fk_soc = " . ($this->fk_soc > 0 ? (int) $this->fk_soc : 'NULL') . ",";
+            $sql .= " hostname = " . ($this->hostname ? "'" . $this->db->escape($this->hostname) . "'" : 'NULL') . ",";
+            $sql .= " os = " . ($this->os ? "'" . $this->db->escape($this->os) . "'" : 'NULL') . ",";
+            $sql .= " report = '" . $this->db->escape($this->report) . "',";
+            $sql .= " date_creation = '" . $this->db->idate($now) . "'";
+            $sql .= " WHERE rowid = " . (int) $existing->id;
+
+            if ($this->db->query($sql)) {
+                $this->id = $existing->id;
+                return $this->id;
+            }
+            return -1;
+        }
 
         $sql = "INSERT INTO " . MAIN_DB_PREFIX . $this->table_element;
         $sql .= " (unique_id, fk_soc, hostname, os, report, date_creation)";
@@ -43,20 +63,11 @@ class SysteminfoReport extends CommonObject
         $sql .= "'" . $this->db->escape($this->report) . "', ";
         $sql .= "'" . $this->db->idate($now) . "')";
 
-        $resql = $this->db->query($sql);
-        if ($resql) {
+        if ($this->db->query($sql)) {
             $this->id = $this->db->last_insert_id(MAIN_DB_PREFIX . $this->table_element);
-        } else {
-            $error++;
+            return $this->id;
         }
-
-        if ($error) {
-            $this->db->rollback();
-            return -1;
-        }
-
-        $this->db->commit();
-        return $this->id;
+        return -1;
     }
 
     /**
@@ -126,20 +137,15 @@ class SysteminfoReport extends CommonObject
     }
 
     /**
-     * List the latest report of each known machine.
+     * List all machines (one row per machine since save() is an upsert).
      *
      * @return array Array of report rows (raw objects), empty on error
      */
     public function listLatestPerMachine()
     {
-        $sql = "SELECT r.rowid, r.unique_id, r.fk_soc, r.hostname, r.os, r.report, r.date_creation";
-        $sql .= " FROM " . MAIN_DB_PREFIX . $this->table_element . " AS r";
-        $sql .= " INNER JOIN (";
-        $sql .= "   SELECT unique_id, MAX(rowid) AS maxid";
-        $sql .= "   FROM " . MAIN_DB_PREFIX . $this->table_element;
-        $sql .= "   GROUP BY unique_id";
-        $sql .= " ) AS m ON m.unique_id = r.unique_id AND m.maxid = r.rowid";
-        $sql .= " ORDER BY r.unique_id";
+        $sql = "SELECT rowid, unique_id, fk_soc, hostname, os, report, date_creation";
+        $sql .= " FROM " . MAIN_DB_PREFIX . $this->table_element;
+        $sql .= " ORDER BY unique_id";
 
         $rows = array();
         $resql = $this->db->query($sql);

@@ -1,7 +1,7 @@
 -- Table storing machine system info reports sent by the Windows agent.
 CREATE TABLE llx_systeminfo_reports (
     rowid         integer AUTO_INCREMENT PRIMARY KEY,
-    unique_id     varchar(128) NOT NULL,
+    unique_id     varchar(128) NOT NULL UNIQUE,
     fk_soc        integer DEFAULT NULL,
     hostname      varchar(255) DEFAULT NULL,
     os            varchar(255) DEFAULT NULL,
