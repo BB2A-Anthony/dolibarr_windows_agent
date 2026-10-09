@@ -3,7 +3,8 @@ import logging
 import os
 import threading
 
-from agent.sender import load_config, send_report, test_connection
+from agent.crypto import decrypt
+from agent.sender import enroll, get_api_key, load_config, send_report, test_connection
 
 CONFIG_PATH = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "config.json"
@@ -62,8 +63,10 @@ def open_settings(controller, on_saved=None):
     import tkinter as tk
     from tkinter import messagebox, ttk
 
+    needs_enroll = not get_api_key(controller.config)
+
     root = tk.Tk()
-    root.title("Dolibarr Agent - Paramètres")
+    root.title("Dolibarr Agent - " + ("Installation" if needs_enroll else "Paramètres"))
     root.resizable(False, False)
     root.attributes("-topmost", True)
 
@@ -74,11 +77,24 @@ def open_settings(controller, on_saved=None):
     url_var = tk.StringVar(value=controller.config.get("api_url", ""))
     ttk.Entry(frame, textvariable=url_var, width=50).grid(row=0, column=1, pady=4)
 
-    ttk.Label(frame, text="Machine (guid) :", anchor="w").grid(row=1, column=0, sticky="w", pady=4)
-    ttk.Label(frame, text=controller.config.get("guid", ""), foreground="gray").grid(row=1, column=1, sticky="w", pady=4)
+    row = 1
+    if needs_enroll:
+        ttk.Label(frame, text="Jeton d'installation :").grid(row=1, column=0, sticky="w", pady=4)
+        token_var = tk.StringVar()
+        ttk.Entry(frame, textvariable=token_var, width=50, show="*").grid(row=1, column=1, pady=4)
+        ttk.Label(
+            frame,
+            text="Jeton fourni par l'administrateur Dolibarr\n(constante SYSTEMINFO_ENROLL_TOKEN).",
+            foreground="gray", justify="left",
+        ).grid(row=2, column=0, columnspan=2, sticky="w", pady=(2, 0))
+        row = 3
+
+    ttk.Label(frame, text="Machine (guid) :", anchor="w").grid(row=row, column=0, sticky="w", pady=4)
+    ttk.Label(frame, text=controller.config.get("guid", ""), foreground="gray").grid(row=row, column=1, sticky="w", pady=4)
+    row += 1
     status_var = tk.StringVar()
     ttk.Label(frame, textvariable=status_var, foreground="gray").grid(
-        row=2, column=0, columnspan=2, sticky="w", pady=(8, 0)
+        row=row, column=0, columnspan=2, sticky="w", pady=(8, 0)
     )
 
     def do_test():
@@ -93,6 +109,22 @@ def open_settings(controller, on_saved=None):
         if not api_url:
             messagebox.showwarning("Champ requis", "L'URL est obligatoire.", parent=root)
             return
+        if needs_enroll:
+            token = token_var.get().strip()
+            if not token:
+                messagebox.showwarning("Champ requis", "Le jeton d'installation est obligatoire.", parent=root)
+                return
+            controller.config["api_url"] = api_url
+            status_var.set("Enrôlement en cours...")
+            root.update_idletasks()
+            ok, message = enroll(controller.config, token, controller.config_path)
+            if not ok:
+                status_var.set("Échec - " + message)
+                return
+            controller.save(api_url)
+            messagebox.showinfo("Installé", message, parent=root)
+            root.destroy()
+            return
         controller.save(api_url)
         if on_saved:
             on_saved()
@@ -100,7 +132,7 @@ def open_settings(controller, on_saved=None):
         root.destroy()
 
     buttons = ttk.Frame(frame)
-    buttons.grid(row=4, column=0, columnspan=2, pady=(12, 0), sticky="e")
+    buttons.grid(row=row + 1, column=0, columnspan=2, pady=(12, 0), sticky="e")
     ttk.Button(buttons, text="Tester la connexion", command=do_test).pack(side="left", padx=4)
     ttk.Button(buttons, text="Enregistrer", command=save_and_close).pack(side="left", padx=4)
 

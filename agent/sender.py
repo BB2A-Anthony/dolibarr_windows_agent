@@ -78,6 +78,43 @@ def dolibarr_url(config, path):
     return api_url + DOLIBARR_API_ROOT + path
 
 
+def enroll(config, token, config_path):
+    """Exchange an enrollment token for the API key on the Dolibarr server.
+
+    Returns (ok, message). On success the API key is stored encrypted in
+    config (DPAPI) and never shown to the user.
+    """
+    base = config["api_url"].rstrip("/")
+    if "/api/index.php" in base:
+        base = base.split("/api/index.php")[0]
+    url = base + "/custom/systeminfo/enroll.php"
+    try:
+        resp = requests.get(
+            url,
+            params={"token": token},
+            timeout=config.get("timeout_seconds", 30),
+            verify=config.get("verify_ssl", True),
+        )
+        if resp.status_code != 200:
+            try:
+                message = resp.json().get("error", resp.reason)
+            except ValueError:
+                message = resp.reason
+            return False, "Enrôlement refusé : {}".format(message)
+        data = resp.json()
+        api_key = data.get("api_key")
+        if not api_key:
+            return False, "Réponse invalide du serveur (pas de clé)."
+        set_api_key(config, config_path, api_key)
+        return True, "Agent enrôlé : clé API récupérée et stockée chiffrée."
+    except requests.exceptions.SSLError:
+        return False, "Erreur de certificat SSL."
+    except requests.exceptions.ConnectionError:
+        return False, "Impossible de joindre le serveur (URL incorrecte ?)."
+    except requests.exceptions.Timeout:
+        return False, "Délai d'attente dépassé."
+
+
 def test_connection(config):
     """Ping the Dolibarr status endpoint. Returns (ok, message)."""
     try:
