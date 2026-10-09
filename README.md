@@ -18,7 +18,8 @@ Service Windows qui collecte les informations systèmes de la machine et les env
     "api_url": "https://example.com/api/systeminfo",
     "unique_id": "REPLACE-WITH-UNIQUE-ID",
     "api_key": "",
-    "poll_interval_seconds": 300,
+    "initial_delay_seconds": 30,
+    "poll_interval_seconds": 14400,
     "timeout_seconds": 30,
     "verify_ssl": true
 }
@@ -29,7 +30,8 @@ Service Windows qui collecte les informations systèmes de la machine et les env
 | `api_url` | URL de l'API qui reçoit les informations |
 | `unique_id` | Identifiant unique de la machine (ex. code tiers Dolibarr). Si vide, utilise automatiquement le `MachineGuid` Windows |
 | `api_key` | Clé API Dolibarr de l'utilisateur, envoyée en en-tête `DOLIBARR_API_KEY` (fiche utilisateur Dolibarr > onglet « Interface API » > générer une clé) |
-| `poll_interval_seconds` | Intervalle entre deux envois (par défaut 300 s) |
+| `initial_delay_seconds` | Délai avant le premier envoi après démarrage (par défaut 30 s) |
+| `poll_interval_seconds` | Intervalle entre deux envois (par défaut 14400 s = 4 h) |
 | `timeout_seconds` | Timeout HTTP (par défaut 30 s) |
 | `verify_ssl` | Vérification du certificat TLS (par défaut true) |
 

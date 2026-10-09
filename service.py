@@ -51,7 +51,10 @@ class DolibarrAgentService(win32serviceutil.ServiceFramework):
             self.log.error("Impossible de charger %s\n%s", config_path, traceback.format_exc())
             return
 
-        interval = self.config.get("poll_interval_seconds", 300)
+        initial_delay = self.config.get("initial_delay_seconds", 30)
+        interval = self.config.get("poll_interval_seconds", 14400)
+        if self.stop_event.wait(initial_delay):
+            return
         while not self.stop_event.is_set():
             try:
                 send_report(self.config)

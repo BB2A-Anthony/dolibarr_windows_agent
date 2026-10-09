@@ -9,6 +9,9 @@ CONFIG_PATH = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "config.json"
 )
 
+DEFAULT_INITIAL_DELAY = 30
+DEFAULT_POLL_INTERVAL = 14400
+
 
 class AgentController:
     def __init__(self, config_path=CONFIG_PATH):
@@ -31,9 +34,14 @@ class AgentController:
         return bool(self.loop_thread and self.loop_thread.is_alive())
 
     def _loop(self):
+        initial_delay = self.config.get("initial_delay_seconds", DEFAULT_INITIAL_DELAY)
+        interval = self.config.get("poll_interval_seconds", DEFAULT_POLL_INTERVAL)
+        if self.stop_event.wait(initial_delay):
+            return
         while not self.stop_event.is_set():
             self.send_once()
-            self.stop_event.wait(self.config.get("poll_interval_seconds", 300))
+            if self.stop_event.wait(interval):
+                return
 
     def send_once(self):
         try:
@@ -135,8 +143,8 @@ def main():
 
     def on_test(icon, item):
         ok, message = controller.test()
-        controller_log = logging.getLogger("tray")
-        (controller_log.info if ok else controller_log.error)("Test connexion: %s", message)
+        log = logging.getLogger("tray")
+        (log.info if ok else log.error)("Test connexion: %s", message)
 
     def on_quit(icon, item):
         controller.stop()

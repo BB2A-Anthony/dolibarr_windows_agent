@@ -27,12 +27,13 @@ def main():
     if args.loop:
         import time
 
+        time.sleep(config.get("initial_delay_seconds", 30))
         while True:
             try:
                 send_report(config)
             except Exception as exc:
                 logging.getLogger("run").error("Report failed: %s", exc)
-            time.sleep(config.get("poll_interval_seconds", 300))
+            time.sleep(config.get("poll_interval_seconds", 14400))
     else:
         payload = send_report(config)
         print(json.dumps(payload, indent=2, default=str))
