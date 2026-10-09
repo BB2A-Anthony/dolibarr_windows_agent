@@ -3,7 +3,7 @@ import json
 import logging
 import os
 
-from agent.sender import load_config, send_report
+from agent.sender import load_config, send_report, set_api_key
 
 
 def main():
@@ -16,6 +16,11 @@ def main():
         help="Path to config.json",
     )
     parser.add_argument("--loop", action="store_true", help="Send continuously")
+    parser.add_argument(
+        "--set-api-key",
+        metavar="KEY",
+        help="Store the Dolibarr API key encrypted (DPAPI) in config.json",
+    )
     args = parser.parse_args()
 
     logging.basicConfig(
@@ -23,6 +28,11 @@ def main():
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
     config = load_config(args.config)
+
+    if args.set_api_key is not None:
+        set_api_key(config, args.config, args.set_api_key)
+        print("Cle API stockee chiffree dans", args.config)
+        return
 
     if args.loop:
         import time

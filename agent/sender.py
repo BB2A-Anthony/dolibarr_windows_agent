@@ -6,6 +6,7 @@ import uuid
 import requests
 
 from agent.collector import collect_system_info
+from agent.crypto import decrypt, encrypt, migrate_config
 
 logger = logging.getLogger("agent.sender")
 
@@ -24,7 +25,31 @@ def load_config(path):
                 json.dump(config, f, indent=4)
         except OSError:
             pass
+    migrate_config(config, path)
     return config
+
+
+def get_api_key(config):
+    """Return the plaintext API key (decrypted from DPAPI storage)."""
+    encrypted = config.get("api_key_encrypted")
+    if encrypted:
+        key = decrypt(encrypted)
+        if key:
+            return key
+        logger.warning("Impossible de decrypter la cle API stockee")
+    return config.get("api_key") or ""
+
+
+def set_api_key(config, path, api_key):
+    """Store the API key encrypted and remove any plaintext from config."""
+    encrypted = encrypt(api_key)
+    if encrypted:
+        config["api_key_encrypted"] = encrypted
+        config.pop("api_key", None)
+    else:
+        config["api_key"] = api_key
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(config, f, indent=4)
 
 
 def auth_headers(config):
@@ -34,7 +59,7 @@ def auth_headers(config):
     header (not Bearer tokens).
     """
     headers = {"Content-Type": "application/json", "Accept": "application/json"}
-    api_key = config.get("api_key")
+    api_key = get_api_key(config)
     if api_key:
         headers["DOLIBARR_API_KEY"] = api_key
     return headers
