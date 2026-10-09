@@ -101,7 +101,7 @@ def collect_system_info(config):
 
 
 def _anydesk_id(winreg):
-    """Read the AnyDesk ID from the registry, if installed.
+    r"""Read the AnyDesk ID from the registry, if installed.
 
     AnyDesk names its config value 'ad_<id>' in HKLM\SOFTWARE\AnyDesk,
     so the ID is recovered from the value name itself.
