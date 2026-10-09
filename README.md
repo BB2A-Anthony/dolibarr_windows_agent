@@ -28,7 +28,7 @@ Service Windows qui collecte les informations systèmes de la machine et les env
 |---|---|
 | `api_url` | URL de l'API qui reçoit les informations |
 | `unique_id` | Identifiant unique de la machine (ex. code tiers Dolibarr). Si vide, utilise automatiquement le `MachineGuid` Windows |
-| `api_key` | Jeton optionnel envoyé en en-tête `Authorization: Bearer <key>` |
+| `api_key` | Clé API Dolibarr de l'utilisateur, envoyée en en-tête `DOLIBARR_API_KEY` (fiche utilisateur Dolibarr > onglet « Interface API » > générer une clé) |
 | `poll_interval_seconds` | Intervalle entre deux envois (par défaut 300 s) |
 | `timeout_seconds` | Timeout HTTP (par défaut 30 s) |
 | `verify_ssl` | Vérification du certificat TLS (par défaut true) |
@@ -71,7 +71,8 @@ python run.py --config config.json --loop
 Lancer `tray.py` (ou l'exécutable `DolibarrAgentTray.exe`) pour afficher une icône dans la barre des tâches :
 
 - **Envoyer maintenant** : envoie immédiatement un rapport
-- **Paramètres (URL / Identifiant)...** : fenêtre pour modifier l'URL de l'API et l'identifiant unique (enregistrés dans `config.json` et pris en compte sans redémarrage)
+- **Paramètres (URL / Clé API / Identifiant)...** : fenêtre pour modifier l'URL de l'API, la clé API Dolibarr et l'identifiant unique (enregistrés dans `config.json` et pris en compte sans redémarrage), avec bouton « Tester la connexion »
+- **Tester la connexion** : vérifie que l'API Dolibarr est joignable et que la clé est acceptée
 - **Quitter** : arrête l'agent et l'icône
 
 Pour un lancement automatique au démarrage de Windows, placer un raccourci de `DolibarrAgentTray.exe` dans le dossier Démarrage (`shell:startup`).
@@ -102,6 +103,18 @@ Pour un lancement automatique au démarrage de Windows, placer un raccourci de `
     ```
 
 Le service journalise dans `agent_service.log` à côté de l'exécutable.
+
+## Connexion à une instance Dolibarr
+
+1. **Côté Dolibarr** : activer l'API (**Configuration > API**, module REST) et générer une clé API pour un utilisateur (fiche utilisateur > « Interface API »).
+2. **Côté agent** : renseigner dans `config.json` (ou via l'icône > Paramètres) :
+   - `api_url` : URL de base de votre Dolibarr (ex. `https://dolibarr.mondomaine.com`) — l'agent construit automatiquement les URLs `/api/index.php/...`
+   - `api_key` : la clé API Dolibarr
+   - `unique_id` : le **code client** du tiers Dolibarr à mettre à jour
+3. **Endpoint de réception** : installer le module fourni dans [`server_module/systeminfo`](server_module/systeminfo/README.md), qui accepte `POST /api/index.php/systeminfo/machine` et rattache les informations au tiers correspondant au `unique_id`.
+4. **Tester** : bouton « Tester la connexion » dans les paramètres de l'icône (appelle `GET /api/index.php/status`).
+
+L'authentification Dolibarr utilise l'en-tête `DOLIBARR_API_KEY` (pas de Bearer).
 
 ## Côté API (exemple de réception)
 

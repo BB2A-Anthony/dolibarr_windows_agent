@@ -1,7 +1,7 @@
 {
-    "api_url": "https://example.com/api/systeminfo",
+    "api_url": "https://dolibarr.example.com",
     "unique_id": "REPLACE-WITH-UNIQUE-ID",
-    "api_key": "",
+    "api_key": "REPLACE-WITH-DOLIBARR-API-KEY",
     "poll_interval_seconds": 300,
     "timeout_seconds": 30,
     "verify_ssl": true
