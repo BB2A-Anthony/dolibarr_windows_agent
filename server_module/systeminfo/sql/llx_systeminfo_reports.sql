@@ -50,6 +50,8 @@ CREATE TABLE llx_systeminfo_reports (
     -- Remote access
     teamviewer_installed tinyint DEFAULT NULL,
     teamviewer_id       varchar(32) DEFAULT NULL,
+    rustdesk_installed  tinyint DEFAULT NULL,
+    rustdesk_id         varchar(64) DEFAULT NULL,
 
     -- Raw JSON payload and timestamps
     report            text,

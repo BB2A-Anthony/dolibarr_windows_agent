@@ -94,8 +94,59 @@ def collect_system_info(config):
         info["updates"] = _update_status()
         info["installed_softwares"] = _installed_softwares(winreg)
         info["teamviewer"] = _teamviewer_id(winreg)
+        info["rustdesk"] = _rustdesk_id(winreg)
 
     return info
+
+
+def _rustdesk_id(winreg):
+    """Read the RustDesk ID from the registry, if installed."""
+    result = {"installed": False, "id": None}
+    root_paths = (
+        ("SOFTWARE\\RustDesk", winreg.KEY_READ | winreg.KEY_WOW64_64KEY),
+        ("SOFTWARE\\WOW6432Node\\RustDesk", winreg.KEY_READ | winreg.KEY_WOW64_32KEY),
+    )
+    for root_path, access in root_paths:
+        try:
+            key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, root_path, 0, access)
+        except OSError:
+            continue
+        with key:
+            result["installed"] = True
+            try:
+                result["id"] = winreg.QueryValueEx(key, "Id")[0]
+            except OSError:
+                continue
+            if result["id"]:
+                break
+
+    if not result["id"]:
+        # RustDesk keeps its ID in config files (%APPDATA%\RustDesk\config\RustDesk.toml):
+        #   id = '123456789'  or  enc_id = '...'
+        import os
+        config_dir = os.path.join(
+            os.environ.get("APPDATA", ""), "RustDesk", "config"
+        )
+        if os.path.isdir(config_dir):
+            result["installed"] = True
+            for filename in ("RustDesk.toml", "RustDesk_local.toml"):
+                path = os.path.join(config_dir, filename)
+                if not os.path.isfile(path):
+                    continue
+                try:
+                    with open(path, "r", encoding="utf-8", errors="ignore") as f:
+                        for line in f:
+                            line = line.strip()
+                            if (line.startswith("id =") or line.startswith("id=")):
+                                value = line.split("=", 1)[1].strip().strip("'\"")
+                                if value:
+                                    result["id"] = value
+                                    break
+                except OSError:
+                    continue
+                if result["id"]:
+                    break
+    return result
 
 
 def _teamviewer_id(winreg):

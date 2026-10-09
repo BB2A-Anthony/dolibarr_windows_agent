@@ -124,6 +124,11 @@ class ActionsSysteminfo
                 $tvVersion = !empty($tv['version']) ? ' (v' . $tv['version'] . ')' : '';
                 $out .= '<tr><td>TeamViewer</td><td><strong>' . dol_escape_htmltag($tvId) . '</strong>' . dol_escape_htmltag($tvVersion) . '</td></tr>';
             }
+            $rd = isset($data['rustdesk']) ? $data['rustdesk'] : array();
+            if (!empty($rd['installed'])) {
+                $rdId = !empty($rd['id']) ? $rd['id'] : 'ID inconnu';
+                $out .= '<tr><td>RustDesk</td><td><strong>' . dol_escape_htmltag($rdId) . '</strong></td></tr>';
+            }
             $out .= '</table></div>';
         }
         $out .= '</div>';
