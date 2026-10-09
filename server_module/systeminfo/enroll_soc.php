@@ -14,6 +14,7 @@ define('NOCSRFCHECK', 1);
 define('NOBROWSERNOTIFY', 1);
 
 require_once '../../main.inc.php';
+require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
 
 header('Content-Type: application/json');
 
@@ -61,8 +62,16 @@ $sql = "UPDATE " . MAIN_DB_PREFIX . "systeminfo_enroll";
 $sql .= " SET used = 1 WHERE rowid = " . (int) $obj->rowid;
 $db->query($sql);
 
+// Return human-readable thirdparty details for the agent confirmation message.
+$thirdparty = new Societe($db);
+$thirdparty->fetch((int) $obj->fk_soc);
+
 echo json_encode(array(
     'success' => true,
     'guid' => $guid,
     'thirdparty_id' => (int) $obj->fk_soc,
+    'thirdparty_name' => $thirdparty->name,
+    'thirdparty_alias' => $thirdparty->name_alias,
+    'thirdparty_zip' => $thirdparty->zip,
+    'thirdparty_town' => $thirdparty->town,
 ));

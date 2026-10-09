@@ -139,13 +139,26 @@ def enroll_soc(config, code):
         fk_soc = data.get("thirdparty_id")
         if not fk_soc:
             return False, "Réponse invalide du serveur."
-        return True, "Machine rattachée au tiers #{}.".format(fk_soc)
+        return True, "Machine rattachée à : {}.".format(_thirdparty_label(data))
     except requests.exceptions.SSLError:
         return False, "Erreur de certificat SSL."
     except requests.exceptions.ConnectionError:
         return False, "Impossible de joindre le serveur (URL incorrecte ?)."
     except requests.exceptions.Timeout:
         return False, "Délai d'attente dépassé."
+
+
+def _thirdparty_label(data):
+    """Build a readable label: name (alias) zip town."""
+    name = data.get("thirdparty_name") or "Tiers #{}".format(data.get("thirdparty_id", "?"))
+    alias = data.get("thirdparty_alias")
+    parts = [name + (" ({})".format(alias) if alias else "")]
+    zip_code = data.get("thirdparty_zip")
+    town = data.get("thirdparty_town")
+    location = " ".join(p for p in (zip_code, town) if p)
+    if location:
+        parts.append(location)
+    return " ".join(parts)
 
 
 def test_connection(config):
