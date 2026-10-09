@@ -93,6 +93,39 @@ class SysteminfoReport extends CommonObject
     }
 
     /**
+     * Fetch the latest report for a given thirdparty (fk_soc).
+     *
+     * @param  int $fk_soc Thirdparty id
+     * @return int 1 if found, 0 if not found, < 0 on error
+     */
+    public function fetchLatestBySoc($fk_soc)
+    {
+        $sql = "SELECT rowid, unique_id, fk_soc, hostname, os, report, date_creation";
+        $sql .= " FROM " . MAIN_DB_PREFIX . $this->table_element;
+        $sql .= " WHERE fk_soc = " . (int) $fk_soc;
+        $sql .= " ORDER BY date_creation DESC, rowid DESC";
+        $sql .= " LIMIT 1";
+
+        $resql = $this->db->query($sql);
+        if (!$resql) {
+            return -1;
+        }
+        $obj = $this->db->fetch_object($resql);
+        if (!$obj) {
+            return 0;
+        }
+
+        $this->id = $obj->rowid;
+        $this->unique_id = $obj->unique_id;
+        $this->fk_soc = $obj->fk_soc;
+        $this->hostname = $obj->hostname;
+        $this->os = $obj->os;
+        $this->report = $obj->report;
+        $this->date_creation = $this->db->jdate($obj->date_creation);
+        return 1;
+    }
+
+    /**
      * List the latest report of each known machine.
      *
      * @return array Array of report rows (raw objects), empty on error

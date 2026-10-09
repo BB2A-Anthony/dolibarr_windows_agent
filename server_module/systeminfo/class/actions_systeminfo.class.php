@@ -37,12 +37,12 @@ class ActionsSysteminfo
             return 0;
         }
         $societe = $parameters['object'];
-        if (empty($societe->code_client)) {
+        if (empty($societe->id)) {
             return 0;
         }
 
         $report = new SysteminfoReport($this->db);
-        $result = $report->fetchLatest($societe->code_client);
+        $result = $report->fetchLatestBySoc($societe->id);
         if ($result != 1) {
             return 0;
         }

@@ -41,9 +41,14 @@ class Systeminfo extends DolibarrApi
             throw new RestException(400, 'Champ unique_id manquant');
         }
 
-        $thirdparty = new Societe($this->db);
-        $result = $thirdparty->fetch('', '', $payload['unique_id']);
-        $fk_soc = ($result > 0 && $thirdparty->id > 0) ? $thirdparty->id : null;
+        $fk_soc = null;
+        if (!empty($payload['fk_soc'])) {
+            $fk_soc = (int) $payload['fk_soc'];
+            $thirdparty = new Societe($this->db);
+            if ($thirdparty->fetch($fk_soc) <= 0) {
+                throw new RestException(404, 'fk_soc=' . $fk_soc . ' : tiers introuvable');
+            }
+        }
 
         $hostname = isset($payload['hostname']) ? $payload['hostname'] : '';
         $os = isset($payload['os_details']['ProductName'])

@@ -17,7 +17,13 @@ ENDPOINT_PATH = "/systeminfo/machine"
 def load_config(path):
     with open(path, "r", encoding="utf-8") as f:
         config = json.load(f)
-    config["unique_id"] = config.get("unique_id") or _machine_id()
+    if not config.get("unique_id"):
+        config["unique_id"] = _machine_id()
+        try:
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(config, f, indent=4)
+        except OSError:
+            pass
     return config
 
 
