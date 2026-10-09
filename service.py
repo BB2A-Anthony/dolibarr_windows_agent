@@ -13,8 +13,8 @@ from agent.sender import load_config, send_report
 
 
 class DolibarrAgentService(win32serviceutil.ServiceFramework):
-    _svc_name_ = "DolibarrWindowsAgent"
-    _svc_display_name_ = "Dolibarr Windows Agent"
+    _svc_name_ = "DolibarrAgent"
+    _svc_display_name_ = "Dolibarr Agent"
     _svc_description_ = (
         "Envoie périodiquement les informations systèmes de la machine "
         "vers l'API Dolibarr configurée."

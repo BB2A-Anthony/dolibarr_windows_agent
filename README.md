@@ -94,15 +94,15 @@ Pour un lancement automatique au démarrage de Windows, placer un raccourci de `
     build_exe.bat
     ```
 
-3. Placer `dist\DolibarrWindowsAgent.exe` et `config.json` dans le même dossier (ex. `C:\Agent\`), adapter `config.json` (URL de l'API + `guid`).
+3. Placer `dist\DolibarrAgent.exe` et `config.json` dans le même dossier (ex. `C:\Agent\`), adapter `config.json` (URL de l'API + `guid`).
 
 4. Installer, démarrer, arrêter, désinstaller le service (en administrateur) :
 
     ```bat
-    DolibarrWindowsAgent.exe install
-    DolibarrWindowsAgent.exe start
-    DolibarrWindowsAgent.exe stop
-    DolibarrWindowsAgent.exe remove
+    DolibarrAgent.exe install
+    DolibarrAgent.exe start
+    DolibarrAgent.exe stop
+    DolibarrAgent.exe remove
     ```
 
 Le service journalise dans `agent_service.log` à côté de l'exécutable.
