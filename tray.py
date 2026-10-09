@@ -140,7 +140,7 @@ def open_settings(controller, on_saved=None):
         if soc_code:
             status_var.set("Enrôlement tiers en cours...")
             root.update_idletasks()
-            ok, message = enroll_soc(controller.config, soc_code, controller.config_path)
+            ok, message = enroll_soc(controller.config, soc_code)
             if not ok:
                 status_var.set("Échec enrôlement tiers - " + message)
                 return

@@ -115,7 +115,7 @@ def enroll(config, token, config_path):
         return False, "Délai d'attente dépassé."
 
 
-def enroll_soc(config, code, config_path):
+def enroll_soc(config, code):
     """Link this machine to a thirdparty using a one-time code (5 min valid)
     generated on the thirdparty card. Returns (ok, message)."""
     base = config["api_url"].rstrip("/")
@@ -139,9 +139,6 @@ def enroll_soc(config, code, config_path):
         fk_soc = data.get("thirdparty_id")
         if not fk_soc:
             return False, "Réponse invalide du serveur."
-        config["fk_soc"] = fk_soc
-        with open(config_path, "w", encoding="utf-8") as f:
-            json.dump(config, f, indent=4)
         return True, "Machine rattachée au tiers #{}.".format(fk_soc)
     except requests.exceptions.SSLError:
         return False, "Erreur de certificat SSL."
