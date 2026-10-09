@@ -66,7 +66,7 @@ class SysteminfoReport extends CommonObject
     {
         $os = isset($payload['os_details']) ? $payload['os_details'] : array();
 
-        $this->fk_soc = isset($payload['fk_soc']) ? (int) $payload['fk_soc'] : null;
+        $this->fk_soc = isset($payload['fk_soc']) ? (int) $payload['fk_soc'] : null; // null: preserve existing assignment on update
         $this->hostname = isset($payload['hostname']) ? $payload['hostname'] : null;
         $this->fqdn = isset($payload['fqdn']) ? $payload['fqdn'] : null;
         $this->os = isset($os['ProductName']) ? $os['ProductName'] : null;
@@ -159,6 +159,10 @@ class SysteminfoReport extends CommonObject
         $now = dol_now();
 
         if ($found == 1) {
+            // Preserve the existing thirdparty assignment: the agent never
+            // sends fk_soc, assignment is done from Dolibarr (putMachineSoc).
+            $this->fk_soc = $existing->fk_soc;
+
             $sql = "UPDATE " . MAIN_DB_PREFIX . $this->table_element . " SET";
             $sql .= $this->_columnSql();
             $sql .= ", date_creation = '" . $this->db->idate($now) . "'";

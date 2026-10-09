@@ -52,9 +52,8 @@ class AgentController:
     def test(self):
         return test_connection(self.config)
 
-    def save(self, api_url, fk_soc, api_key):
+    def save(self, api_url, api_key):
         self.config["api_url"] = api_url
-        self.config["fk_soc"] = fk_soc
         self.config["api_key"] = api_key
         with open(self.config_path, "w", encoding="utf-8") as f:
             json.dump(self.config, f, indent=4)
@@ -80,14 +79,8 @@ def open_settings(controller, on_saved=None):
     key_var = tk.StringVar(value=controller.config.get("api_key", ""))
     ttk.Entry(frame, textvariable=key_var, width=50, show="*").grid(row=1, column=1, pady=4)
 
-    ttk.Label(frame, text="ID du tiers (fk_soc) :").grid(row=2, column=0, sticky="w", pady=4)
-    id_var = tk.StringVar(value=str(controller.config.get("fk_soc", "")))
-    ttk.Entry(frame, textvariable=id_var, width=50).grid(row=2, column=1, pady=4)
-    machine_var = tk.StringVar(value="Machine : " + controller.config.get("guid", ""))
-    ttk.Label(frame, textvariable=machine_var, foreground="gray").grid(
-        row=5, column=0, columnspan=2, sticky="w", pady=(4, 0)
-    )
-
+    ttk.Label(frame, text="Machine (guid) :", anchor="w").grid(row=2, column=0, sticky="w", pady=4)
+    ttk.Label(frame, text=controller.config.get("guid", ""), foreground="gray").grid(row=2, column=1, sticky="w", pady=4)
     status_var = tk.StringVar()
     ttk.Label(frame, textvariable=status_var, foreground="gray").grid(
         row=3, column=0, columnspan=2, sticky="w", pady=(8, 0)
@@ -103,12 +96,11 @@ def open_settings(controller, on_saved=None):
 
     def save_and_close():
         api_url = url_var.get().strip()
-        fk_soc = id_var.get().strip()
         api_key = key_var.get().strip()
-        if not api_url or not fk_soc:
-            messagebox.showwarning("Champs requis", "URL et ID du tiers sont obligatoires.", parent=root)
+        if not api_url:
+            messagebox.showwarning("Champ requis", "L'URL est obligatoire.", parent=root)
             return
-        controller.save(api_url, fk_soc, api_key)
+        controller.save(api_url, api_key)
         if on_saved:
             on_saved()
         messagebox.showinfo("Enregistré", "Paramètres enregistrés.", parent=root)

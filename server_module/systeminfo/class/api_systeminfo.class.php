@@ -41,19 +41,6 @@ class Systeminfo extends DolibarrApi
             throw new RestException(400, 'Champ guid manquant');
         }
 
-        $fk_soc = null;
-        if (!empty($payload['fk_soc'])) {
-            $fk_soc = (int) $payload['fk_soc'];
-            $thirdparty = new Societe($this->db);
-            if ($thirdparty->fetch($fk_soc) <= 0) {
-                throw new RestException(404, 'fk_soc=' . $fk_soc . ' : tiers introuvable');
-            }
-        }
-
-        $hostname = isset($payload['hostname']) ? $payload['hostname'] : '';
-        $os = isset($payload['os_details']['ProductName'])
-            ? $payload['os_details']['ProductName'] : '';
-
         $payload['softwares'] = $this->_matchSoftwares(
             isset($payload['installed_softwares']) ? $payload['installed_softwares'] : array()
         );
@@ -69,16 +56,55 @@ class Systeminfo extends DolibarrApi
         }
 
         dol_syslog(
-            'systeminfo: rapport enregistre (rowid=' . $id . ')'
-            . ($fk_soc ? ' pour le tiers #' . $fk_soc : ' sans tiers'),
+            'systeminfo: rapport enregistre (rowid=' . $id . ') pour la machine guid='
+            . $payload['guid'],
             LOG_INFO
         );
 
         return array(
             'success' => true,
             'report_id' => $id,
-            'thirdparty_id' => $fk_soc,
+            'guid' => $payload['guid'],
             'softwares' => $payload['softwares'],
+        );
+    }
+
+    /**
+     * Assign a machine (guid) to a thirdparty. Called from Dolibarr,
+     * not from the agent: the agent never sends fk_soc.
+     *
+     * @param  string $guid   Machine identifier
+     * @param  int    $fk_soc Thirdparty id
+     * @return array
+     * @throws RestException 404 Unknown machine/thirdparty
+     */
+    public function putMachineSoc($guid, $fk_soc)
+    {
+        if (empty($guid) || empty($fk_soc)) {
+            throw new RestException(400, 'guid et fk_soc requis');
+        }
+
+        $report = new SysteminfoReport($this->db);
+        if ($report->fetchLatest($guid) != 1) {
+            throw new RestException(404, 'Machine guid=' . $guid . ' introuvable');
+        }
+
+        $thirdparty = new Societe($this->db);
+        if ($thirdparty->fetch((int) $fk_soc) <= 0) {
+            throw new RestException(404, 'fk_soc=' . $fk_soc . ' : tiers introuvable');
+        }
+
+        $sql = "UPDATE " . MAIN_DB_PREFIX . "systeminfo_reports";
+        $sql .= " SET fk_soc = " . (int) $fk_soc;
+        $sql .= " WHERE rowid = " . (int) $report->id;
+        if (!$this->db->query($sql)) {
+            throw new RestException(500, 'Erreur lors de l\'affectation');
+        }
+
+        return array(
+            'success' => true,
+            'guid' => $guid,
+            'thirdparty_id' => (int) $fk_soc,
         );
     }
 

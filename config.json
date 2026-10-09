@@ -1,6 +1,5 @@
 {
     "api_url": "https://dolibarr.example.com",
-    "fk_soc": "REPLACE-WITH-THIRDPARTY-ID",
     "api_key": "REPLACE-WITH-DOLIBARR-API-KEY",
     "initial_delay_seconds": 30,
     "poll_interval_seconds": 14400,

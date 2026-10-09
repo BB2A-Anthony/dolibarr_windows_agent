@@ -28,7 +28,7 @@ Service Windows qui collecte les informations systèmes de la machine et les env
 | Clé | Rôle |
 |---|---|
 | `api_url` | URL de l'API qui reçoit les informations |
-| `fk_soc` | ID du tiers Dolibarr (fk_soc) auquel rattacher la machine — à renseigner dans l'agent |
+| `fk_soc` | Non utilisé côté agent — l'affectation machine → tiers se fait dans Dolibarr (endpoint dédié), jamais saisie dans l'agent |
 | `guid` | Identifiant de la machine, généré automatiquement (MachineGuid Windows) — ne se configure normalement pas |
 | `api_key` | Clé API Dolibarr de l'utilisateur, envoyée en en-tête `DOLIBARR_API_KEY` (fiche utilisateur Dolibarr > onglet « Interface API » > générer une clé) |
 | `initial_delay_seconds` | Délai avant le premier envoi après démarrage (par défaut 30 s) |
@@ -113,7 +113,7 @@ Le service journalise dans `agent_service.log` à côté de l'exécutable.
 2. **Côté agent** : renseigner dans `config.json` (ou via l'icône > Paramètres) :
    - `api_url` : URL de base de votre Dolibarr (ex. `https://dolibarr.mondomaine.com`) — l'agent construit automatiquement les URLs `/api/index.php/...`
    - `api_key` : la clé API Dolibarr
-   - `fk_soc` : l'**ID du tiers** Dolibarr à rattacher (visible dans l'URL de la fiche tiers : `socid=...`)
+   - Pas de tiers à renseigner : la machine remonte sans affectation et est rattachée à un tiers **depuis Dolibarr** (`PUT /systeminfo/machine/{guid}/soc` avec `fk_soc`)
 3. **Endpoint de réception** : installer le module fourni dans [`server_module/systeminfo`](server_module/systeminfo/README.md), qui accepte `POST /api/index.php/systeminfo/machine` et rattache les informations au tiers correspondant au `guid`.
 4. **Tester** : bouton « Tester la connexion » dans les paramètres de l'icône (appelle `GET /api/index.php/status`).
 
