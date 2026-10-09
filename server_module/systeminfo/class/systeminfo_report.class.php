@@ -50,6 +50,7 @@ class SysteminfoReport extends CommonObject
         'disk_percent' => 'double',
         'ip_address' => 'string',
         'public_ip' => 'string',
+        'isp' => 'string',
         'mac_address' => 'string',
         'firewall_enabled' => 'int',
         'pending_updates' => 'int',
@@ -118,6 +119,7 @@ class SysteminfoReport extends CommonObject
             }
         }
         $this->public_ip = isset($payload['public_ip']) ? $payload['public_ip'] : null;
+        $this->isp = isset($payload['isp']) ? $payload['isp'] : null;
         $macs = isset($payload['mac_addresses']) ? $payload['mac_addresses'] : array();
         $this->mac_address = !empty($macs) ? $macs[0] : null;
 

@@ -11,6 +11,8 @@ PUBLIC_IP_SERVICES = (
     "https://icanhazip.com",
 )
 
+ISP_INFO_SERVICE = "https://ipinfo.io/json"
+
 
 def collect_system_info(config):
     """Collect Windows system information to report to the API."""
@@ -85,6 +87,7 @@ def collect_system_info(config):
 
     info["mac_addresses"] = _mac_addresses()
     info["public_ip"] = _public_ip()
+    info["isp"] = _isp()
 
     if winreg is not None:
         info["firewall"] = _firewall_status(winreg)
@@ -240,6 +243,19 @@ def _public_ip():
                     return ip
         except requests.RequestException:
             continue
+    return None
+
+
+def _isp():
+    """Fetch the ISP name from ipinfo.io (best effort, short timeout).
+
+    Returns the 'org' field, e.g. 'AS1234 Free SAS'."""
+    try:
+        resp = requests.get(ISP_INFO_SERVICE, timeout=5)
+        if resp.status_code == 200:
+            return resp.json().get("org") or None
+    except (requests.RequestException, ValueError):
+        pass
     return None
 
 
