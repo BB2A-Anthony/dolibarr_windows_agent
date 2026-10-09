@@ -8,6 +8,7 @@
  */
 require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
 require_once __DIR__ . '/systeminfo_report.class.php';
+require_once __DIR__ . '/systeminfo_software.class.php';
 
 class Systeminfo extends DolibarrApi
 {
@@ -53,6 +54,9 @@ class Systeminfo extends DolibarrApi
         $report->fk_soc = $fk_soc;
         $report->hostname = $hostname;
         $report->os = $os;
+        $payload['softwares'] = $this->_matchSoftwares(
+            isset($payload['installed_softwares']) ? $payload['installed_softwares'] : array()
+        );
         $report->report = json_encode($payload);
         $id = $report->create($user);
 
@@ -70,7 +74,48 @@ class Systeminfo extends DolibarrApi
             'success' => true,
             'report_id' => $id,
             'thirdparty_id' => $fk_soc,
+            'softwares' => $payload['softwares'],
         );
+    }
+
+    /**
+     * Match installed softwares against the dictionary (llx_systeminfo_softwares).
+     *
+     * @param  array $installed List of installed software names sent by the agent
+     * @return array ref => array(label, installed, match)
+     */
+    private function _matchSoftwares($installed)
+    {
+        $out = array();
+
+        $sql = "SELECT ref, label, pattern FROM " . MAIN_DB_PREFIX . "systeminfo_softwares";
+        $sql .= " WHERE active = 1";
+        $resql = $this->db->query($sql);
+        if (!$resql) {
+            return $out;
+        }
+
+        while ($obj = $this->db->fetch_object($resql)) {
+            $candidates = array($obj->ref, $obj->label);
+            if (!empty($obj->pattern)) {
+                $candidates[] = $obj->pattern;
+            }
+            $found = null;
+            foreach ($installed as $name) {
+                foreach ($candidates as $candidate) {
+                    if ($candidate !== '' && stripos($name, $candidate) !== false) {
+                        $found = $name;
+                        break 2;
+                    }
+                }
+            }
+            $out[$obj->ref] = array(
+                'label' => $obj->label,
+                'installed' => ($found !== null),
+                'match' => $found,
+            );
+        }
+        return $out;
     }
 
     /**

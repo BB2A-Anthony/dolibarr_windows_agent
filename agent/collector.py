@@ -81,8 +81,40 @@ def collect_system_info(config):
     if winreg is not None:
         info["firewall"] = _firewall_status(winreg)
         info["updates"] = _update_status()
+        info["installed_softwares"] = _installed_softwares(winreg)
 
     return info
+
+
+def _installed_softwares(winreg):
+    """List installed software names from the Windows registry (uninstall keys)."""
+    names = []
+    seen = set()
+    for key_path in (
+        "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall",
+        "SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall",
+    ):
+        for access in (winreg.KEY_READ | winreg.KEY_WOW64_64KEY, winreg.KEY_READ | winreg.KEY_WOW64_32KEY):
+            try:
+                root = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path, 0, access)
+            except OSError:
+                continue
+            with root:
+                for i in range(winreg.QueryInfoKey(root)[0]):
+                    try:
+                        subkey_name = winreg.EnumKey(root, i)
+                        with winreg.OpenKey(root, subkey_name, 0, access) as subkey:
+                            try:
+                                name = winreg.QueryValueEx(subkey, "DisplayName")[0]
+                            except OSError:
+                                continue
+                            if name and name not in seen:
+                                seen.add(name)
+                                names.append(name)
+                    except OSError:
+                        continue
+            break
+    return sorted(names, key=str.lower)
 
 
 def _update_status():
