@@ -107,6 +107,16 @@ Pour un lancement automatique au démarrage de Windows, placer un raccourci de `
 
 Le service journalise dans `agent_service.log` à côté de l'exécutable.
 
+## Stockage chiffré de la clé API (DPAPI) — note importante sur le compte Windows
+
+La clé API est chiffrée avec **DPAPI**, qui lie le chiffrement **au compte Windows qui l'a exécuté** :
+
+- Si vous définissez la clé en lançant l'agent (icône/enrôlement) depuis votre session utilisateur, le **service Windows** (qui tourne sous `SYSTEM`) **ne pourra pas la déchiffrer**.
+- **Règle** : exécutez l'enrôlement/`--set-api-key` **sous le même compte que celui qui enverra les rapports** :
+  - Agent en icône (session utilisateur) → enrôler depuis la même session ✔
+  - Service Windows (`SYSTEM`) → enrôler via la fenêtre de l'icône lancée **en tant que SYSTEM** (Planificateur de tâches), ou chiffrer par un autre mécanisme de déploiement
+- En cas d'erreur de déchiffrement, l'agent journalise « Impossible de decrypter la cle API stockee » : renouvelez simplement l'enrôlement sous le bon compte.
+
 ## Connexion à une instance Dolibarr
 
 1. **Côté Dolibarr** : activer l'API (**Configuration > API**, module REST) et générer une clé API pour un utilisateur (fiche utilisateur > « Interface API »).
