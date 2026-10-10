@@ -17,6 +17,9 @@ if (!$user->admin) {
 $action = GETPOST('action', 'aZ09');
 
 if ($action == 'set') {
+    if (GETPOST('token', 'alpha') != newToken()) {
+        accessforbidden('Jeton de securite invalide (CSRF)', 0, 1);
+    }
     $allowHttp = GETPOST('allow_http', 'int');
     dolibarr_set_const($db, 'SYSTEMINFO_ALLOW_HTTP', $allowHttp ? 1 : 0, 'chaine', 0, '', $conf->entity);
     setEventMessage('Options enregistrees');
@@ -35,7 +38,7 @@ if (getDolGlobalString('SYSTEMINFO_ALLOW_HTTP')) {
     print '</div>';
 }
 
-print '<form method="POST" action="' . $_SERVER['PHP_SELF'] . '">';
+print '<form method="POST" action="' . $_SERVER['SCRIPT_NAME'] . '">';
 print '<input type="hidden" name="action" value="set">';
 print '<input type="hidden" name="token" value="' . newToken() . '">';
 
