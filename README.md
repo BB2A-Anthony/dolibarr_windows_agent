@@ -35,12 +35,14 @@ Service Windows qui collecte les informations systèmes de la machine et les env
 | `poll_interval_seconds` | Intervalle entre deux envois (par défaut 14400 s = 4 h) |
 | `timeout_seconds` | Timeout HTTP (par défaut 30 s) |
 | `verify_ssl` | Vérification du certificat TLS (par défaut true) |
+| `auto_update` | Active la mise à jour automatique de l'agent (par défaut true) — voir ci-dessous |
 
 ## Payload envoyé
 
 ```json
 {
     "guid": "TIERS-001",
+    "agent_version": "1.1.0",
     "hostname": "PC-ATLAS",
     "fqdn": "pc-atlas.local",
     "platform": "Windows",
@@ -58,6 +60,20 @@ Service Windows qui collecte les informations systèmes de la machine et les env
     "cpu": {"count_logical": 8, "count_physical": 4, "percent_used": 12.5}
 }
 ```
+
+## Mise à jour automatique de l'agent
+
+L'agent connaît sa version (`agent_version`, envoyée dans chaque rapport). À chaque cycle d'envoi, il interroge l'API Dolibarr :
+
+```
+GET /api/index.php/systeminfo/config
+→ { "agent_windows_version": "1.1.0", "download_url": "...", "sha256": "..." }
+```
+
+- La dernière version publiée est définie dans le descripteur du module (`AGENT_WINDOWS_VERSION`) et modifiable dans **Configuration du module Systeminfo**.
+- Si la version du serveur est supérieure et qu'un paquet est configuré (URL + SHA-256 obligatoires), l'agent télécharge le zip, vérifie le checksum, puis remplace les exécutables via un script détaché (l'ancienne version continue de tourner jusqu'au remplacement).
+- Sécurité : le paquet doit être hébergé sur le même serveur Dolibarr, servi en HTTPS, et son SHA-256 est obligatoire — un paquet dont le checksum ne correspond pas est rejeté.
+- Pour désactiver : `"auto_update": false` dans `config.json`.
 
 ## Utilisation en ligne de commande
 

@@ -22,8 +22,9 @@ class Systeminfo extends DolibarrApi
      */
     public function __construct()
     {
-        global $db;
+        global $db, $conf;
         $this->db = $db;
+        $this->conf = $conf;
     }
 
     /**
@@ -173,6 +174,41 @@ class Systeminfo extends DolibarrApi
                 'match' => $found,
             );
         }
+        return $out;
+    }
+
+    /**
+     * Get the module configuration relevant to the agent.
+     *
+     * Currently exposes the latest published Windows agent version
+     * (SYSTEMINFO_AGENT_WINDOWS_VERSION), so the agent can compare it
+     * with its own version and trigger a self-update when needed.
+     *
+     *   GET /api/index.php/systeminfo/config
+     *
+     * @return array
+     */
+    public function getConfig()
+    {
+        $this->_checkHttps();
+
+        if (empty($this->conf)) {
+            global $conf;
+            $this->conf = $conf;
+        }
+
+        $out = array(
+            'agent_windows_version' => getDolGlobalString('SYSTEMINFO_AGENT_WINDOWS_VERSION'),
+        );
+
+        // Optional auto-update package (zip des executables PyInstaller).
+        if (getDolGlobalString('SYSTEMINFO_AGENT_DOWNLOAD_URL')) {
+            $out['download_url'] = getDolGlobalString('SYSTEMINFO_AGENT_DOWNLOAD_URL');
+        }
+        if (getDolGlobalString('SYSTEMINFO_AGENT_SHA256')) {
+            $out['sha256'] = getDolGlobalString('SYSTEMINFO_AGENT_SHA256');
+        }
+
         return $out;
     }
 

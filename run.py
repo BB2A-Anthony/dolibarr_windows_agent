@@ -36,6 +36,7 @@ def main():
 
     if args.loop:
         import time
+        from agent.updater import maybe_update_and_restart
 
         time.sleep(config.get("initial_delay_seconds", 30))
         while True:
@@ -43,6 +44,13 @@ def main():
                 send_report(config)
             except Exception as exc:
                 logging.getLogger("run").error("Report failed: %s", exc)
+            if config.get("auto_update", True):
+                try:
+                    if maybe_update_and_restart(config):
+                        logging.getLogger("run").info("Mise a jour planifiee, arret.")
+                        return
+                except Exception as exc:
+                    logging.getLogger("run").error("Update failed: %s", exc)
             time.sleep(config.get("poll_interval_seconds", 14400))
     else:
         payload = send_report(config)

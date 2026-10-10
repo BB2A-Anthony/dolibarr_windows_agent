@@ -19,6 +19,16 @@ $action = GETPOST('action', 'aZ09');
 if ($action == 'set') {
     $allowHttp = GETPOST('allow_http', 'int');
     dolibarr_set_const($db, 'SYSTEMINFO_ALLOW_HTTP', $allowHttp ? 1 : 0, 'chaine', 0, '', $conf->entity);
+
+    $agentVersion = GETPOST('agent_windows_version', 'alphanohtml');
+    dolibarr_set_const($db, 'SYSTEMINFO_AGENT_WINDOWS_VERSION', trim($agentVersion), 'chaine', 0, '', $conf->entity);
+
+    $downloadUrl = GETPOST('agent_download_url', 'alphanohtml');
+    dolibarr_set_const($db, 'SYSTEMINFO_AGENT_DOWNLOAD_URL', trim($downloadUrl), 'chaine', 0, '', $conf->entity);
+
+    $sha256 = GETPOST('agent_sha256', 'alphanohtml');
+    dolibarr_set_const($db, 'SYSTEMINFO_AGENT_SHA256', strtolower(trim($sha256)), 'chaine', 0, '', $conf->entity);
+
     setEventMessage('Options enregistrees');
 }
 
@@ -45,6 +55,18 @@ print '<tr class="liste_titre"><th>Option</th><th>Valeur</th></tr>';
 $checked = getDolGlobalString('SYSTEMINFO_ALLOW_HTTP') ? ' checked' : '';
 print '<tr><td>Exiger HTTPS pour les requetes de l\'agent (recommande)</td>';
 print '<td><input type="checkbox" name="allow_http" value="1"' . $checked . '> Ne pas exiger HTTPS <span style="color:#d4a017; font-weight:bold;">(⚠ à risque : uniquement pour test)</span></td></tr>';
+
+$agentVersion = getDolGlobalString('SYSTEMINFO_AGENT_WINDOWS_VERSION');
+print '<tr><td>Derniere version de l\'agent Windows</td>';
+print '<td><input type="text" name="agent_windows_version" value="' . dol_escape_htmltag($agentVersion) . '" size="16"> publiee aux agents via l\'API <code>GET /systeminfo/config</code></td></tr>';
+
+$downloadUrl = getDolGlobalString('SYSTEMINFO_AGENT_DOWNLOAD_URL');
+print '<tr><td>URL du paquet de mise a jour (zip)</td>';
+print '<td><input type="text" name="agent_download_url" value="' . dol_escape_htmltag($downloadUrl) . '" size="64"> <span class="opacitymedium">optionnel : https vers DolibarrAgent.zip (exes PyInstaller)</span></td></tr>';
+
+$sha256 = getDolGlobalString('SYSTEMINFO_AGENT_SHA256');
+print '<tr><td>SHA-256 du paquet</td>';
+print '<td><input type="text" name="agent_sha256" value="' . dol_escape_htmltag($sha256) . '" size="72"> <span class="opacitymedium">obligatoire pour la mise a jour automatique : le paquet est rejete si le checksum ne correspond pas</span></td></tr>';
 
 print '</table>';
 print '<br>';

@@ -60,7 +60,21 @@ class DolibarrAgentService(win32serviceutil.ServiceFramework):
                 send_report(self.config)
             except Exception:
                 self.log.error("Envoi échoué:\n%s", traceback.format_exc())
+            if self._check_update():
+                return
             self.stop_event.wait(interval)
+
+    def _check_update(self):
+        """Apply a pending agent update (auto-update). Returns True when an
+        update was scheduled and the service loop must stop."""
+        if not self.config.get("auto_update", True):
+            return False
+        try:
+            from agent.updater import maybe_update_and_restart
+            return maybe_update_and_restart(self.config)
+        except Exception:
+            self.log.error("Mise a jour echouee:\n%s", traceback.format_exc())
+            return False
 
 
 if __name__ == "__main__":

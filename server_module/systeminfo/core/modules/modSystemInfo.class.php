@@ -13,6 +13,12 @@ class modSystemInfo extends DolibarrModules
      */
     const AGENT_LOGIN = 'useragent';
 
+    /**
+     * Latest published version of the Windows agent. Exposed to the agent
+     * through the API (getConfig) so it can detect and apply updates.
+     */
+    const AGENT_WINDOWS_VERSION = '1.1.0';
+
     public function __construct($db)
     {
         global $conf, $langs;
@@ -38,6 +44,17 @@ class modSystemInfo extends DolibarrModules
         $this->hidden = false;
         $this->config_page_url = array('systeminfo.php', 'systeminfo');
         $this->const = array();
+
+        // Derniere version de l'agent Windows (recuperable via l'API getConfig).
+        $this->const[] = array(
+            'SYSTEMINFO_AGENT_WINDOWS_VERSION',
+            'chaine',
+            self::AGENT_WINDOWS_VERSION,
+            'Derniere version publiee de l\'agent Windows',
+            0,
+            'current',
+            1
+        );
         $this->tabs = array(
             // The 5th field is a condition evaluated by verifCond():
             // the tab is only visible with the module 'enroll' permission.
@@ -171,6 +188,15 @@ class modSystemInfo extends DolibarrModules
         unset($randomPassword);
 
         dolibarr_set_const($this->db, 'SYSTEMINFO_AGENT_LOGIN', self::AGENT_LOGIN, 'chaine', 0, '', $conf->entity);
+        dolibarr_set_const(
+            $this->db,
+            'SYSTEMINFO_AGENT_WINDOWS_VERSION',
+            getDolGlobalString('SYSTEMINFO_AGENT_WINDOWS_VERSION') ?: self::AGENT_WINDOWS_VERSION,
+            'chaine',
+            0,
+            '',
+            $conf->entity
+        );
 
         // Grant read + write rights to the technical user so it can post
         // reports through the API (Dolibarr checks module rights per user).

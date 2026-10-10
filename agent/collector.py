@@ -5,6 +5,8 @@ import uuid
 import psutil
 import requests
 
+from agent import AGENT_VERSION
+
 PUBLIC_IP_SERVICES = (
     "https://api.ipify.org",
     "https://ifconfig.me/ip",
@@ -18,6 +20,7 @@ def collect_system_info(config):
     """Collect Windows system information to report to the API."""
     info = {
         "guid": config["guid"],
+        "agent_version": AGENT_VERSION,
         "hostname": socket.gethostname(),
         "fqdn": socket.getfqdn(),
         "platform": platform.system(),

@@ -41,8 +41,22 @@ class AgentController:
             return
         while not self.stop_event.is_set():
             self.send_once()
+            if self.check_update():
+                return
             if self.stop_event.wait(interval):
                 return
+
+    def check_update(self):
+        """Apply a pending agent update (auto-update). Returns True when an
+        update was scheduled and the loop must stop so it can apply."""
+        if not self.config.get("auto_update", True):
+            return False
+        try:
+            from agent.updater import maybe_update_and_restart
+            return maybe_update_and_restart(self.config)
+        except Exception as exc:
+            logging.getLogger("tray").error("Mise a jour echouee: %s", exc)
+            return False
 
     def send_once(self):
         try:
