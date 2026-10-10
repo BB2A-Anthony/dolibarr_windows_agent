@@ -41,7 +41,22 @@ class modSystemInfo extends DolibarrModules
         $this->tabs = array(
             'thirdparty:+agent:Ajouter une machine (agent):systeminfo@systeminfo:/custom/systeminfo/enroll_card.php?socid=__ID__'
         );
+
+        // Module-specific permissions.
         $this->rights = array();
+        $r = 0;
+
+        $r++;
+        $this->rights[$r][0] = $this->numero + 1; // 449001
+        $this->rights[$r][1] = 'Lire les informations systeme des machines';
+        $this->rights[$r][3] = 0;
+        $this->rights[$r][4] = 'read';
+
+        $r++;
+        $this->rights[$r][0] = $this->numero + 2; // 449002
+        $this->rights[$r][1] = 'Ajouter une machine (enrolement)';
+        $this->rights[$r][3] = 0;
+        $this->rights[$r][4] = 'enroll';
 
         $this->dictionaries = array(
             'langs' => 'systeminfo@systeminfo',
@@ -156,6 +171,17 @@ class modSystemInfo extends DolibarrModules
         }
 
         dolibarr_set_const($this->db, 'SYSTEMINFO_AGENT_LOGIN', self::AGENT_LOGIN, 'chaine', 0, '', $conf->entity);
+
+        // Grant the read right to the technical user so it can post reports
+        // through the API (Dolibarr checks module rights per user).
+        $sql = "SELECT rowid FROM " . MAIN_DB_PREFIX . "user_rights";
+        $sql .= " WHERE fk_user = " . (int) $tmpuser->id . " AND fk_id = " . (int) ($this->numero + 1);
+        $resql = $this->db->query($sql);
+        if ($resql && $this->db->num_rows($resql) == 0) {
+            $sql = "INSERT INTO " . MAIN_DB_PREFIX . "user_rights (fk_user, fk_id)";
+            $sql .= " VALUES (" . (int) $tmpuser->id . ", " . (int) ($this->numero + 1) . ")";
+            $this->db->query($sql);
+        }
 
         dol_syslog('systeminfo: utilisateur technique ' . self::AGENT_LOGIN . ' pret (apikey generee)', LOG_INFO);
         return 1;
