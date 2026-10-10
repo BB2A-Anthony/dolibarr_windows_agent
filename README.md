@@ -70,7 +70,7 @@ GET /api/index.php/systeminfo/config
 → { "agent_windows_version": "1.1.0", "download_url": "...", "sha256": "..." }
 ```
 
-- La dernière version publiée est définie dans le descripteur du module (`AGENT_WINDOWS_VERSION`) et modifiable dans **Configuration du module Systeminfo**.
+- La dernière version publiée est définie dans le descripteur du module (`AGENT_WINDOWS_VERSION`), ainsi que l'URL de téléchargement (`AGENT_WINDOWS_UPDATE_URL`, placeholder `{version}` remplacé par cette version — par défaut la release Git taguée correspondante). Rien n'est stocké dans les constantes Dolibarr : pour publier une mise à jour, on modifie ces constantes dans le code du descripteur.
 - Si la version du serveur est supérieure et qu'un paquet est configuré (URL + SHA-256 obligatoires), l'agent télécharge le zip, vérifie le checksum, puis remplace les exécutables via un script détaché (l'ancienne version continue de tourner jusqu'au remplacement).
 - Sécurité : le paquet doit être hébergé sur le même serveur Dolibarr, servi en HTTPS, et son SHA-256 est obligatoire — un paquet dont le checksum ne correspond pas est rejeté.
 - Pour désactiver : `"auto_update": false` dans `config.json`.

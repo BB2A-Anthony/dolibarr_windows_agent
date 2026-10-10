@@ -7,6 +7,8 @@
  * GET  /api/index.php/systeminfo/machine/{id}   -> latest report of one machine
  */
 require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
+require_once DOL_DOCUMENT_ROOT . '/core/modules/DolibarrModules.class.php';
+require_once __DIR__ . '/../core/modules/modSystemInfo.class.php';
 require_once __DIR__ . '/systeminfo_report.class.php';
 require_once __DIR__ . '/systeminfo_software.class.php';
 
@@ -22,9 +24,8 @@ class Systeminfo extends DolibarrApi
      */
     public function __construct()
     {
-        global $db, $conf;
+        global $db;
         $this->db = $db;
-        $this->conf = $conf;
     }
 
     /**
@@ -180,9 +181,16 @@ class Systeminfo extends DolibarrApi
     /**
      * Get the module configuration relevant to the agent.
      *
-     * Currently exposes the latest published Windows agent version
-     * (SYSTEMINFO_AGENT_WINDOWS_VERSION), so the agent can compare it
-     * with its own version and trigger a self-update when needed.
+     * Exposes the latest published Windows agent version and its download
+     * URL, both defined as class constants in the module descriptor
+     * (modSystemInfo::AGENT_WINDOWS_VERSION and AGENT_WINDOWS_UPDATE_URL).
+     * Nothing is stored in the Dolibarr constants table: changing the
+     * version means editing the descriptor (and re-publishing a matching
+     * Git release).
+     *
+     * The '{version}' placeholder in the URL is replaced by the published
+     * version, so the default URL points to the Git release tagged with
+     * that version.
      *
      *   GET /api/index.php/systeminfo/config
      *
@@ -192,25 +200,16 @@ class Systeminfo extends DolibarrApi
     {
         $this->_checkHttps();
 
-        if (empty($this->conf)) {
-            global $conf;
-            $this->conf = $conf;
-        }
-
+        $version = modSystemInfo::AGENT_WINDOWS_VERSION;
         $out = array(
-            'agent_windows_version' => getDolGlobalString('SYSTEMINFO_AGENT_WINDOWS_VERSION'),
+            'agent_windows_version' => $version,
         );
 
-        // URL de telechargement du paquet (constante du descripteur
-        // SYSTEMINFO_AGENT_WINDOWS_UPDATE_URL, configurable dans la page
-        // admin). Le placeholder {version} est remplace par la version
-        // stockee dans SYSTEMINFO_AGENT_WINDOWS_VERSION, ce qui permet de
-        // pointer par defaut vers la release Git taguee avec cette version.
-        $downloadUrl = getDolGlobalString('SYSTEMINFO_AGENT_WINDOWS_UPDATE_URL');
+        $downloadUrl = modSystemInfo::AGENT_WINDOWS_UPDATE_URL;
         if ($downloadUrl !== '') {
             $out['download_url'] = str_replace(
                 '{version}',
-                rawurlencode($out['agent_windows_version']),
+                rawurlencode($version),
                 $downloadUrl
             );
         }

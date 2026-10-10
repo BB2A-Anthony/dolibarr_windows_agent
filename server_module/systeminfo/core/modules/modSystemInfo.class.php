@@ -23,8 +23,8 @@ class modSystemInfo extends DolibarrModules
      * Download URL of the agent package (zip). Exposed to the agent
      * through the API (getConfig) for the auto-update mechanism.
      * Defaults to the Git repository release tagged with the version
-     * stored in SYSTEMINFO_AGENT_WINDOWS_VERSION: the '{version}'
-     * placeholder is replaced by that version in getConfig.
+     * stored in AGENT_WINDOWS_VERSION: the '{version}' placeholder is
+     * replaced by that version in getConfig.
      */
     const AGENT_WINDOWS_UPDATE_URL = 'https://github.com/BB2A-Anthony/dolibarr_windows_agent/releases/download/{version}/DolibarrAgent.zip';
 
@@ -53,28 +53,6 @@ class modSystemInfo extends DolibarrModules
         $this->hidden = false;
         $this->config_page_url = array('systeminfo.php', 'systeminfo');
         $this->const = array();
-
-        // Derniere version de l'agent Windows (recuperable via l'API getConfig).
-        $this->const[] = array(
-            'SYSTEMINFO_AGENT_WINDOWS_VERSION',
-            'chaine',
-            self::AGENT_WINDOWS_VERSION,
-            'Derniere version publiee de l\'agent Windows',
-            0,
-            'current',
-            1
-        );
-
-        // URL de telechargement du paquet de l'agent Windows (via getConfig).
-        $this->const[] = array(
-            'SYSTEMINFO_AGENT_WINDOWS_UPDATE_URL',
-            'chaine',
-            self::AGENT_WINDOWS_UPDATE_URL,
-            'URL de telechargement de la derniere version de l\'agent Windows (zip)',
-            0,
-            'current',
-            1
-        );
         $this->tabs = array(
             // The 5th field is a condition evaluated by verifCond():
             // the tab is only visible with the module 'enroll' permission.
@@ -208,26 +186,6 @@ class modSystemInfo extends DolibarrModules
         unset($randomPassword);
 
         dolibarr_set_const($this->db, 'SYSTEMINFO_AGENT_LOGIN', self::AGENT_LOGIN, 'chaine', 0, '', $conf->entity);
-        dolibarr_set_const(
-            $this->db,
-            'SYSTEMINFO_AGENT_WINDOWS_VERSION',
-            getDolGlobalString('SYSTEMINFO_AGENT_WINDOWS_VERSION') ?: self::AGENT_WINDOWS_VERSION,
-            'chaine',
-            0,
-            '',
-            $conf->entity
-        );
-        dolibarr_set_const(
-            $this->db,
-            'SYSTEMINFO_AGENT_WINDOWS_UPDATE_URL',
-            getDolGlobalString('SYSTEMINFO_AGENT_WINDOWS_UPDATE_URL') !== ''
-                ? getDolGlobalString('SYSTEMINFO_AGENT_WINDOWS_UPDATE_URL')
-                : self::AGENT_WINDOWS_UPDATE_URL,
-            'chaine',
-            0,
-            '',
-            $conf->entity
-        );
 
         // Grant read + write rights to the technical user so it can post
         // reports through the API (Dolibarr checks module rights per user).

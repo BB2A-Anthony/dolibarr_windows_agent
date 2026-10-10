@@ -9,7 +9,7 @@ Ce module reçoit les informations systèmes de l'agent Windows et permet de les
 | `POST` | `/api/index.php/systeminfo/machine` | L'agent y envoie son rapport (authentifié par `DOLIBARR_API_KEY`) |
 | `GET` | `/api/index.php/systeminfo/machine` | Dernier rapport de **chaque machine** connue |
 | `GET` | `/api/index.php/systeminfo/machine/{guid}` | Dernier rapport d'**une machine** par identifiant unique |
-| `GET` | `/api/index.php/systeminfo/config` | Configuration du module pour l'agent : dernière version publiée de l'agent Windows (`agent_windows_version`), URL de téléchargement du paquet (`download_url`, constante `SYSTEMINFO_AGENT_WINDOWS_UPDATE_URL` du descripteur — par défaut la release du dépôt Git taguée avec cette version via le placeholder `{version}`) et `sha256` si configuré |
+| `GET` | `/api/index.php/systeminfo/config` | Configuration du module pour l'agent : dernière version publiée de l'agent Windows (`agent_windows_version`) et URL de téléchargement du paquet (`download_url`) — définies comme constantes de classe du descripteur du module (`AGENT_WINDOWS_VERSION`, `AGENT_WINDOWS_UPDATE_URL`), rien n'est stocké dans les constantes Dolibarr ; par défaut la release Git taguée `{version}` ; `sha256` si configuré |
 
 ## Installation
 
