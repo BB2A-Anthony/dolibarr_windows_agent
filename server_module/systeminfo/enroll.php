@@ -22,6 +22,12 @@ function enroll_fail($code, $message)
     exit;
 }
 
+// Require HTTPS unless the admin disabled the check.
+if (!getDolGlobalString('SYSTEMINFO_ALLOW_HTTP')
+    && (empty($_SERVER['HTTPS']) || $_SERVER['HTTPS'] == 'off')) {
+    enroll_fail(426, 'HTTPS requis : activez HTTPS, ou definissez SYSTEMINFO_ALLOW_HTTP=1 (non recommande).');
+}
+
 $token = GETPOST('token', 'a-z0-9');
 if (empty($token)) {
     enroll_fail(400, 'Jeton manquant');

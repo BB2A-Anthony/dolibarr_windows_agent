@@ -37,6 +37,8 @@ class Systeminfo extends DolibarrApi
     {
         global $user;
 
+        $this->_checkHttps();
+
         if (empty($payload['guid'])) {
             throw new RestException(400, 'Champ guid manquant');
         }
@@ -80,6 +82,8 @@ class Systeminfo extends DolibarrApi
      */
     public function putMachineSoc($guid, $fk_soc)
     {
+        $this->_checkHttps();
+
         if (empty($guid) || empty($fk_soc)) {
             throw new RestException(400, 'guid et fk_soc requis');
         }
@@ -207,6 +211,27 @@ class Systeminfo extends DolibarrApi
             'date_creation' => $report->date_creation,
         );
         return $this->_formatRow($row);
+    }
+
+    /**
+     * Refuse non-HTTPS requests unless explicitly disabled by the admin
+     * via the SYSTEMINFO_ALLOW_HTTP constant (module settings page).
+     *
+     * @return void
+     * @throws RestException 426 Upgrade Required
+     */
+    private function _checkHttps()
+    {
+        if (getDolGlobalString('SYSTEMINFO_ALLOW_HTTP')) {
+            return;
+        }
+        if (empty($_SERVER['HTTPS']) || $_SERVER['HTTPS'] == 'off') {
+            throw new RestException(
+                426,
+                'HTTPS requis : activez HTTPS sur le serveur, ou definissez '
+                . 'SYSTEMINFO_ALLOW_HTTP=1 pour desactiver ce controle (non recommande).'
+            );
+        }
     }
 
     /**

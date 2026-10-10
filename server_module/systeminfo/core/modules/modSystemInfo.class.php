@@ -36,6 +36,7 @@ class modSystemInfo extends DolibarrModules
         );
 
         $this->hidden = false;
+        $this->config_page_url = array('systeminfo.php', 'systeminfo');
         $this->const = array();
         $this->tabs = array(
             'thirdparty:+agent:Ajouter une machine (agent):systeminfo@systeminfo:/custom/systeminfo/enroll_card.php?socid=__ID__'

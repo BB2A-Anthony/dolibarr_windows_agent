@@ -25,6 +25,13 @@ function enroll_fail($code, $message)
     exit;
 }
 
+// Require HTTPS unless the admin disabled the check.
+if (!getDolGlobalString('SYSTEMINFO_ALLOW_HTTP')
+    && (empty($_SERVER['HTTPS']) || $_SERVER['HTTPS'] == 'off')) {
+    enroll_fail(426, 'HTTPS requis : activez HTTPS, ou definissez SYSTEMINFO_ALLOW_HTTP=1 (non recommande).
+');
+}
+
 $payload = json_decode(file_get_contents('php://input'), true);
 if (!is_array($payload) || empty($payload['code']) || empty($payload['guid'])) {
     enroll_fail(400, 'code et guid requis');
