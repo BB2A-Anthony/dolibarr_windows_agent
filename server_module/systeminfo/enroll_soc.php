@@ -48,6 +48,7 @@ if (!is_array($payload) || empty($payload['code']) || empty($payload['guid'])) {
 
 $code = substr(preg_replace('/[^a-zA-Z0-9]/', '', $payload['code']), 0, 32);
 $guid = substr($payload['guid'], 0, 128);
+$confirmReassign = !empty($payload['confirm_reassign']);
 
 if (empty($code) || empty($guid)) {
     enroll_fail(400, 'code et guid requis');
@@ -74,7 +75,7 @@ if ($db->jdate($obj->date_valid) < dol_now()) {
 
 // --- The machine must exist (it must have reported at least once) ------------
 
-$sql = "SELECT rowid FROM " . MAIN_DB_PREFIX . "systeminfo_reports";
+$sql = "SELECT rowid, fk_soc FROM " . MAIN_DB_PREFIX . "systeminfo_reports";
 $sql .= " WHERE guid = '" . $db->escape($guid) . "'";
 $resql = $db->query($sql);
 if (!$resql) {
@@ -83,6 +84,38 @@ if (!$resql) {
 $machine = $db->fetch_object($resql);
 if (!$machine) {
     enroll_fail(404, 'Machine inconnue : elle doit avoir envoye au moins un rapport avant l\'enrolement');
+}
+
+// --- Reassignment proposal ---------------------------------------------------
+// If the machine already belongs to a different thirdparty, ask for an
+// explicit confirmation instead of silently reassigning (equipment resale).
+
+$currentSocId = (int) ($machine->fk_soc ?: 0);
+$targetSocId = (int) $obj->fk_soc;
+
+if ($currentSocId > 0 && $currentSocId != $targetSocId && !$confirmReassign) {
+    $currentThirdparty = new Societe($db);
+    $currentThirdparty->fetch($currentSocId);
+    $targetThirdparty = new Societe($db);
+    $targetThirdparty->fetch($targetSocId);
+
+    dol_syslog(
+        'systeminfo/enroll_soc: reaffectation proposee guid=' . substr($guid, 0, 8)
+        . '... tiers actuel #' . $currentSocId . ' -> tiers cible #' . $targetSocId,
+        LOG_INFO
+    );
+
+    http_response_code(409);
+    echo json_encode(array(
+        'error' => 'Machine deja rattachee au tiers : ' . $currentThirdparty->name
+            . '. Confirmer la reaffectation vers ' . $targetThirdparty->name . ' ?',
+        'confirm_reassign' => true,
+        'current_thirdparty_id' => $currentSocId,
+        'current_thirdparty_name' => $currentThirdparty->name,
+        'target_thirdparty_id' => $targetSocId,
+        'target_thirdparty_name' => $targetThirdparty->name,
+    ));
+    exit;
 }
 
 // --- Assignment -------------------------------------------------------------

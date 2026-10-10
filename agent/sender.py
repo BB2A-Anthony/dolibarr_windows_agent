@@ -78,12 +78,15 @@ def dolibarr_url(config, path):
     return api_url + DOLIBARR_API_ROOT + path
 
 
-def enroll_soc(config, code, config_path):
+def enroll_soc(config, code, config_path, confirm_reassign=False):
     """Enroll this machine with a one-time code (5 min valid) generated on
     the thirdparty card. The server links the machine to the thirdparty AND
     delivers the technical user's API key (stored encrypted, never shown).
 
-    Returns (ok, message)."""
+    Returns (ok, message, need_confirm) — need_confirm is true when the
+    machine already belongs to another thirdparty and the server asks for
+    confirmation before reassignment.
+    """
     base = config["api_url"].rstrip("/")
     if "/api/index.php" in base:
         base = base.split("/api/index.php")[0]
@@ -91,32 +94,44 @@ def enroll_soc(config, code, config_path):
     try:
         resp = requests.post(
             url,
-            json={"code": code.strip(), "guid": config.get("guid")},
+            json={
+                "code": code.strip(),
+                "guid": config.get("guid"),
+                "confirm_reassign": bool(confirm_reassign),
+            },
             timeout=config.get("timeout_seconds", 30),
             verify=config.get("verify_ssl", True),
         )
+        if resp.status_code == 409:
+            try:
+                data = resp.json()
+            except ValueError:
+                data = {}
+            if data.get("confirm_reassign") and not confirm_reassign:
+                return False, data.get("error", "Réaffectation requise."), True
+            return False, data.get("error", resp.reason), False
         if resp.status_code != 200:
             try:
                 message = resp.json().get("error", resp.reason)
             except ValueError:
                 message = resp.reason
-            return False, "Enrôlement échoué : {}".format(message)
+            return False, "Enrôlement échoué : {}".format(message), False
         data = resp.json()
         fk_soc = data.get("thirdparty_id")
         api_key = data.get("api_key")
         if not fk_soc or not api_key:
-            return False, "Réponse invalide du serveur."
+            return False, "Réponse invalide du serveur.", False
         set_api_key(config, config_path, api_key)
         return True, (
             "Machine rattachée à : {}. Clé API récupérée et stockée chiffrée."
             .format(_thirdparty_label(data))
-        )
+        ), False
     except requests.exceptions.SSLError:
-        return False, "Erreur de certificat SSL."
+        return False, "Erreur de certificat SSL.", False
     except requests.exceptions.ConnectionError:
-        return False, "Impossible de joindre le serveur (URL incorrecte ?)."
+        return False, "Impossible de joindre le serveur (URL incorrecte ?).", False
     except requests.exceptions.Timeout:
-        return False, "Délai d'attente dépassé."
+        return False, "Délai d'attente dépassé.", False
 
 
 def _thirdparty_label(data):

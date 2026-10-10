@@ -110,6 +110,29 @@ def open_settings(controller, on_saved=None):
             messagebox.showwarning("Champ requis", "L'URL est obligatoire.", parent=root)
             return
         soc_code = soc_var.get().strip()
+        def run_enroll():
+            """Enroll and handle the 409 reassignment proposal."""
+            ok, message, need_confirm = enroll_soc(
+                controller.config, soc_code, controller.config_path
+            )
+            if need_confirm:
+                confirm = messagebox.askyesno(
+                    "Réaffectation",
+                    message + "\n\nConfirmer la réaffectation de cette machine ?",
+                    parent=root,
+                )
+                if not confirm:
+                    status_var.set("Réaffectation annulée.")
+                    return False
+                ok, message, need_confirm = enroll_soc(
+                    controller.config, soc_code, controller.config_path,
+                    confirm_reassign=True,
+                )
+            if not ok:
+                status_var.set("Échec - " + message)
+                return False
+            return True
+
         if needs_enroll:
             if not soc_code:
                 messagebox.showwarning("Champ requis", "Le code d'enrôlement est obligatoire à l'installation.", parent=root)
@@ -117,9 +140,7 @@ def open_settings(controller, on_saved=None):
             controller.config["api_url"] = api_url
             status_var.set("Enrôlement en cours...")
             root.update_idletasks()
-            ok, message = enroll_soc(controller.config, soc_code, controller.config_path)
-            if not ok:
-                status_var.set("Échec - " + message)
+            if not run_enroll():
                 return
             controller.save(api_url)
             messagebox.showinfo("Installé", message, parent=root)
@@ -129,9 +150,7 @@ def open_settings(controller, on_saved=None):
         if soc_code:
             status_var.set("Enrôlement tiers en cours...")
             root.update_idletasks()
-            ok, message = enroll_soc(controller.config, soc_code, controller.config_path)
-            if not ok:
-                status_var.set("Échec enrôlement tiers - " + message)
+            if not run_enroll():
                 return
         if on_saved:
             on_saved()
