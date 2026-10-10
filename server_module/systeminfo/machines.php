@@ -27,7 +27,7 @@ $backtopage = GETPOST('backtopage', 'alpha');
 // --- Reassignment form processing -------------------------------------------
 
 if ($action == 'reassign' && $cancel) {
-    header('Location: ' . ($_SERVER['PHP_SELF']));
+    header('Location: ' . ($_SERVER['SCRIPT_NAME']));
     exit;
 }
 
@@ -109,7 +109,7 @@ if ($action == 'reassign' && $id > 0 && !$confirm) {
     $machineRow = fetchReportById($db, $id);
     if ($machineRow) {
         $form = new Form($db);
-        print '<form method="POST" action="' . $_SERVER['PHP_SELF'] . '">';
+        print '<form method="POST" action="' . $_SERVER['SCRIPT_NAME'] . '">';
         print '<input type="hidden" name="token" value="' . newToken() . '">';
         print '<input type="hidden" name="action" value="reassign">';
         print '<input type="hidden" name="machine_id" value="' . $id . '">';
@@ -159,7 +159,7 @@ foreach ($machines as $machine) {
 
     print '<td>' . dol_escape_htmltag($machine->os) . '</td>';
     print '<td>' . dol_print_date($db->jdate($machine->date_creation), 'dayhour') . '</td>';
-    print '<td><a class="button button-small" href="' . $_SERVER['PHP_SELF']
+    print '<td><a class="button button-small" href="' . $_SERVER['SCRIPT_NAME']
         . '?action=reassign&machine_id=' . (int) $machine->rowid . '">'
         . ($user->hasRight('systeminfo', 'write') ? 'Réaffecter' : '—') . '</a></td>';
     print '</tr>';

@@ -74,7 +74,7 @@ class SysteminfoReport extends CommonObject
     {
         $os = isset($payload['os_details']) ? $payload['os_details'] : array();
 
-        $this->fk_soc = isset($payload['fk_soc']) ? (int) $payload['fk_soc'] : null; // null: preserve existing assignment on update
+        $this->fk_soc = null; // assignment is server-side only (enroll/putMachineSoc), never from the agent payload
         $this->hostname = isset($payload['hostname']) ? $payload['hostname'] : null;
         $this->fqdn = isset($payload['fqdn']) ? $payload['fqdn'] : null;
         $this->os = isset($os['ProductName']) ? $os['ProductName'] : null;

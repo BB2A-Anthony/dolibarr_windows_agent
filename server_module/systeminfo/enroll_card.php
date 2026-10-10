@@ -87,7 +87,7 @@ if ($nbActive >= 10) {
     $error = 'Trop de codes actifs pour ce tiers : attendez leur expiration (5 minutes) avant d\'en generer de nouveaux.';
 } else {
     // C3 fix: cryptographically secure code (random_bytes), not md5(uniqid()).
-    $code = strtoupper(bin2hex(random_bytes(4)));
+    $code = strtoupper(bin2hex(random_bytes(8)));
 
     $sql = "INSERT INTO " . MAIN_DB_PREFIX . "systeminfo_enroll";
     $sql .= " (code, fk_soc, date_valid, used)";

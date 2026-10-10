@@ -24,42 +24,6 @@ class ActionsSysteminfo
     }
 
     /**
-     * Generate a one-time enrollment code for this thirdparty.
-     *
-     * @param  array $parameters Hook context ('socid' or 'object')
-     * @return int
-     */
-    public function createEnrollCode($parameters)
-    {
-        $socid = 0;
-        if (!empty($parameters['socid'])) {
-            $socid = (int) $parameters['socid'];
-        } elseif (!empty($parameters['object']->id)) {
-            $socid = (int) $parameters['object']->id;
-        }
-        if (empty($socid)) {
-            $this->results['error'] = 'Tiers inconnu';
-            return -1;
-        }
-
-        $code = strtoupper(substr(md5(uniqid('', true) . $socid), 0, 8));
-        $validity = 5 * 60;
-
-        $sql = "INSERT INTO " . MAIN_DB_PREFIX . "systeminfo_enroll";
-        $sql .= " (code, fk_soc, date_valid, used)";
-        $sql .= " VALUES ('" . $this->db->escape($code) . "', " . $socid;
-        $sql .= ", '" . $this->db->idate(dol_now() + $validity) . "', 0)";
-        if (!$this->db->query($sql)) {
-            $this->results['error'] = $this->db->lasterror();
-            return -1;
-        }
-
-        $this->results['code'] = $code;
-        $this->results['validity'] = $validity;
-        return 1;
-    }
-
-    /**
      * Add the system info block on the thirdparty card.
      *
      * @param  array $parameters Hook context ('object' => Societe)

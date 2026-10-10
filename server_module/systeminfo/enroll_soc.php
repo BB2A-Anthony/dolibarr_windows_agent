@@ -148,6 +148,17 @@ if ($currentSocId > 0 && $currentSocId != $targetSocId && !$confirmReassign) {
     exit;
 }
 
+// --- Consume the code FIRST (one-time use, atomic) -------------------------
+// Consumed before the assignment so two concurrent requests with the same
+// code cannot both succeed: only the one flipping used=0 -> 1 proceeds.
+$sql = "UPDATE " . MAIN_DB_PREFIX . "systeminfo_enroll";
+$sql .= " SET used = 1 WHERE rowid = " . (int) $obj->rowid . " AND used = 0";
+$resqlConsume = $db->query($sql);
+if (!$resqlConsume || $db->affected_rows($resqlConsume) == 0) {
+    enroll_fail(403, 'Code deja utilise');
+}
+
+
 // --- Assignment -------------------------------------------------------------
 
 $sql = "UPDATE " . MAIN_DB_PREFIX . "systeminfo_reports";
@@ -157,11 +168,6 @@ $resqlUpdate = $db->query($sql);
 if (!$resqlUpdate) {
     enroll_fail(500, 'Erreur lors de l\'affectation');
 }
-
-// Consume the code (one-time use).
-$sql = "UPDATE " . MAIN_DB_PREFIX . "systeminfo_enroll";
-$sql .= " SET used = 1 WHERE rowid = " . (int) $obj->rowid;
-$db->query($sql);
 
 // --- Deliver the technical user's API key -----------------------------------
 

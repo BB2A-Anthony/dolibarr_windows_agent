@@ -137,7 +137,7 @@ class modSystemInfo extends DolibarrModules
         if ($result > 0 && !empty($tmpuser->api_key)) {
             $apikey = $tmpuser->api_key;
         } else {
-            $apikey = dol_trunc(uniqid('', true) . uniqid('', true), 40, 'right', 'UTF-8', false);
+            $apikey = bin2hex(random_bytes(20));
         }
 
         // Random one-time password: only used to satisfy Dolibarr's

@@ -96,7 +96,14 @@ class Systeminfo extends DolibarrApi
      */
     public function putMachineSoc($guid, $fk_soc, $force = 0)
     {
+        global $user;
         $this->_checkHttps();
+        if (empty($user) || !$user->hasRight('systeminfo', 'write')) {
+            throw new RestException(
+                403,
+                'Permission systeminfo write requise pour affecter une machine'
+            );
+        }
 
         if (empty($guid) || empty($fk_soc)) {
             throw new RestException(400, 'guid et fk_soc requis');
