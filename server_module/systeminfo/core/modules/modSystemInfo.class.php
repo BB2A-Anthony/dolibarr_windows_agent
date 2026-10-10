@@ -19,6 +19,12 @@ class modSystemInfo extends DolibarrModules
      */
     const AGENT_WINDOWS_VERSION = '1.1.0';
 
+    /**
+     * Download URL of the latest agent package (zip). Exposed to the
+     * agent through the API (getConfig) for the auto-update mechanism.
+     */
+    const AGENT_WINDOWS_UPDATE_URL = '';
+
     public function __construct($db)
     {
         global $conf, $langs;
@@ -51,6 +57,17 @@ class modSystemInfo extends DolibarrModules
             'chaine',
             self::AGENT_WINDOWS_VERSION,
             'Derniere version publiee de l\'agent Windows',
+            0,
+            'current',
+            1
+        );
+
+        // URL de telechargement du paquet de l'agent Windows (via getConfig).
+        $this->const[] = array(
+            'SYSTEMINFO_AGENT_WINDOWS_UPDATE_URL',
+            'chaine',
+            self::AGENT_WINDOWS_UPDATE_URL,
+            'URL de telechargement de la derniere version de l\'agent Windows (zip)',
             0,
             'current',
             1
@@ -192,6 +209,17 @@ class modSystemInfo extends DolibarrModules
             $this->db,
             'SYSTEMINFO_AGENT_WINDOWS_VERSION',
             getDolGlobalString('SYSTEMINFO_AGENT_WINDOWS_VERSION') ?: self::AGENT_WINDOWS_VERSION,
+            'chaine',
+            0,
+            '',
+            $conf->entity
+        );
+        dolibarr_set_const(
+            $this->db,
+            'SYSTEMINFO_AGENT_WINDOWS_UPDATE_URL',
+            getDolGlobalString('SYSTEMINFO_AGENT_WINDOWS_UPDATE_URL') !== ''
+                ? getDolGlobalString('SYSTEMINFO_AGENT_WINDOWS_UPDATE_URL')
+                : self::AGENT_WINDOWS_UPDATE_URL,
             'chaine',
             0,
             '',

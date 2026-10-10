@@ -201,9 +201,11 @@ class Systeminfo extends DolibarrApi
             'agent_windows_version' => getDolGlobalString('SYSTEMINFO_AGENT_WINDOWS_VERSION'),
         );
 
-        // Optional auto-update package (zip des executables PyInstaller).
-        if (getDolGlobalString('SYSTEMINFO_AGENT_DOWNLOAD_URL')) {
-            $out['download_url'] = getDolGlobalString('SYSTEMINFO_AGENT_DOWNLOAD_URL');
+        // URL de telechargement du paquet (constante du descripteur
+        // SYSTEMINFO_AGENT_WINDOWS_UPDATE_URL, configurable dans la page admin).
+        $downloadUrl = getDolGlobalString('SYSTEMINFO_AGENT_WINDOWS_UPDATE_URL');
+        if ($downloadUrl !== '') {
+            $out['download_url'] = $downloadUrl;
         }
         if (getDolGlobalString('SYSTEMINFO_AGENT_SHA256')) {
             $out['sha256'] = getDolGlobalString('SYSTEMINFO_AGENT_SHA256');

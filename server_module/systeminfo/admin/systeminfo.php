@@ -24,7 +24,7 @@ if ($action == 'set') {
     dolibarr_set_const($db, 'SYSTEMINFO_AGENT_WINDOWS_VERSION', trim($agentVersion), 'chaine', 0, '', $conf->entity);
 
     $downloadUrl = GETPOST('agent_download_url', 'alphanohtml');
-    dolibarr_set_const($db, 'SYSTEMINFO_AGENT_DOWNLOAD_URL', trim($downloadUrl), 'chaine', 0, '', $conf->entity);
+    dolibarr_set_const($db, 'SYSTEMINFO_AGENT_WINDOWS_UPDATE_URL', trim($downloadUrl), 'chaine', 0, '', $conf->entity);
 
     $sha256 = GETPOST('agent_sha256', 'alphanohtml');
     dolibarr_set_const($db, 'SYSTEMINFO_AGENT_SHA256', strtolower(trim($sha256)), 'chaine', 0, '', $conf->entity);
@@ -60,7 +60,7 @@ $agentVersion = getDolGlobalString('SYSTEMINFO_AGENT_WINDOWS_VERSION');
 print '<tr><td>Derniere version de l\'agent Windows</td>';
 print '<td><input type="text" name="agent_windows_version" value="' . dol_escape_htmltag($agentVersion) . '" size="16"> publiee aux agents via l\'API <code>GET /systeminfo/config</code></td></tr>';
 
-$downloadUrl = getDolGlobalString('SYSTEMINFO_AGENT_DOWNLOAD_URL');
+$downloadUrl = getDolGlobalString('SYSTEMINFO_AGENT_WINDOWS_UPDATE_URL');
 print '<tr><td>URL du paquet de mise a jour (zip)</td>';
 print '<td><input type="text" name="agent_download_url" value="' . dol_escape_htmltag($downloadUrl) . '" size="64"> <span class="opacitymedium">optionnel : https vers DolibarrAgent.zip (exes PyInstaller)</span></td></tr>';
 
