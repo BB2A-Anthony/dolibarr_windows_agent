@@ -39,7 +39,9 @@ class modSystemInfo extends DolibarrModules
         $this->config_page_url = array('systeminfo.php', 'systeminfo');
         $this->const = array();
         $this->tabs = array(
-            'thirdparty:+agent:Ajouter une machine (agent):systeminfo@systeminfo:/custom/systeminfo/enroll_card.php?socid=__ID__'
+            // The 5th field is a condition evaluated by verifCond():
+            // the tab is only visible with the module 'enroll' permission.
+            'thirdparty:+agent:Ajouter une machine (agent):systeminfo@systeminfo:/custom/systeminfo/enroll_card.php?socid=__ID__:$user->hasRight(\'systeminfo\', \'enroll\')'
         );
 
         // Module-specific permissions.
