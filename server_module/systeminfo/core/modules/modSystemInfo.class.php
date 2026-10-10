@@ -60,6 +60,12 @@ class modSystemInfo extends DolibarrModules
         $this->rights[$r][3] = 0;
         $this->rights[$r][4] = 'enroll';
 
+        $r++;
+        $this->rights[$r][0] = $this->numero + 3; // 449003
+        $this->rights[$r][1] = 'Ecrire les informations systeme (agent)';
+        $this->rights[$r][3] = 0;
+        $this->rights[$r][4] = 'write';
+
         $this->dictionaries = array(
             'langs' => 'systeminfo@systeminfo',
             'tabname' => array(
@@ -174,15 +180,17 @@ class modSystemInfo extends DolibarrModules
 
         dolibarr_set_const($this->db, 'SYSTEMINFO_AGENT_LOGIN', self::AGENT_LOGIN, 'chaine', 0, '', $conf->entity);
 
-        // Grant the read right to the technical user so it can post reports
-        // through the API (Dolibarr checks module rights per user).
-        $sql = "SELECT rowid FROM " . MAIN_DB_PREFIX . "user_rights";
-        $sql .= " WHERE fk_user = " . (int) $tmpuser->id . " AND fk_id = " . (int) ($this->numero + 1);
-        $resql = $this->db->query($sql);
-        if ($resql && $this->db->num_rows($resql) == 0) {
-            $sql = "INSERT INTO " . MAIN_DB_PREFIX . "user_rights (fk_user, fk_id)";
-            $sql .= " VALUES (" . (int) $tmpuser->id . ", " . (int) ($this->numero + 1) . ")";
-            $this->db->query($sql);
+        // Grant read + write rights to the technical user so it can post
+        // reports through the API (Dolibarr checks module rights per user).
+        foreach (array($this->numero + 1, $this->numero + 3) as $rightId) {
+            $sql = "SELECT rowid FROM " . MAIN_DB_PREFIX . "user_rights";
+            $sql .= " WHERE fk_user = " . (int) $tmpuser->id . " AND fk_id = " . (int) $rightId;
+            $resql = $this->db->query($sql);
+            if ($resql && $this->db->num_rows($resql) == 0) {
+                $sql = "INSERT INTO " . MAIN_DB_PREFIX . "user_rights (fk_user, fk_id)";
+                $sql .= " VALUES (" . (int) $tmpuser->id . ", " . (int) $rightId . ")";
+                $this->db->query($sql);
+            }
         }
 
         dol_syslog('systeminfo: utilisateur technique ' . self::AGENT_LOGIN . ' pret (apikey generee)', LOG_INFO);

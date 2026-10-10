@@ -39,6 +39,15 @@ class Systeminfo extends DolibarrApi
 
         $this->_checkHttps();
 
+        // The agent posts reports: require the module write permission
+        // (granted to the technical 'useragent' at module activation).
+        if (empty($user) || !$user->hasRight('systeminfo', 'write')) {
+            throw new RestException(
+                403,
+                'Permission systeminfo write requise pour envoyer un rapport'
+            );
+        }
+
         if (empty($payload['guid'])) {
             throw new RestException(400, 'Champ guid manquant');
         }
