@@ -202,10 +202,17 @@ class Systeminfo extends DolibarrApi
         );
 
         // URL de telechargement du paquet (constante du descripteur
-        // SYSTEMINFO_AGENT_WINDOWS_UPDATE_URL, configurable dans la page admin).
+        // SYSTEMINFO_AGENT_WINDOWS_UPDATE_URL, configurable dans la page
+        // admin). Le placeholder {version} est remplace par la version
+        // stockee dans SYSTEMINFO_AGENT_WINDOWS_VERSION, ce qui permet de
+        // pointer par defaut vers la release Git taguee avec cette version.
         $downloadUrl = getDolGlobalString('SYSTEMINFO_AGENT_WINDOWS_UPDATE_URL');
         if ($downloadUrl !== '') {
-            $out['download_url'] = $downloadUrl;
+            $out['download_url'] = str_replace(
+                '{version}',
+                rawurlencode($out['agent_windows_version']),
+                $downloadUrl
+            );
         }
         if (getDolGlobalString('SYSTEMINFO_AGENT_SHA256')) {
             $out['sha256'] = getDolGlobalString('SYSTEMINFO_AGENT_SHA256');

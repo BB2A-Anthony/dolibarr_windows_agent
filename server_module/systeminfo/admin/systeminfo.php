@@ -62,7 +62,7 @@ print '<td><input type="text" name="agent_windows_version" value="' . dol_escape
 
 $downloadUrl = getDolGlobalString('SYSTEMINFO_AGENT_WINDOWS_UPDATE_URL');
 print '<tr><td>URL du paquet de mise a jour (zip)</td>';
-print '<td><input type="text" name="agent_download_url" value="' . dol_escape_htmltag($downloadUrl) . '" size="64"> <span class="opacitymedium">optionnel : https vers DolibarrAgent.zip (exes PyInstaller)</span></td></tr>';
+print '<td><input type="text" name="agent_download_url" value="' . dol_escape_htmltag($downloadUrl) . '" size="64"> <span class="opacitymedium">https vers DolibarrAgent.zip (exes PyInstaller) ; le placeholder {version} est remplace par la version ci-dessus</span></td></tr>';
 
 $sha256 = getDolGlobalString('SYSTEMINFO_AGENT_SHA256');
 print '<tr><td>SHA-256 du paquet</td>';

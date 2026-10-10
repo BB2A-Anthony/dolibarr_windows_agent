@@ -20,11 +20,13 @@ class modSystemInfo extends DolibarrModules
     const AGENT_WINDOWS_VERSION = '1.1.0';
 
     /**
-     * Download URL of the latest agent package (zip). Exposed to the
-     * agent through the API (getConfig) for the auto-update mechanism.
-     * Defaults to the latest release published on the Git repository.
+     * Download URL of the agent package (zip). Exposed to the agent
+     * through the API (getConfig) for the auto-update mechanism.
+     * Defaults to the Git repository release tagged with the version
+     * stored in SYSTEMINFO_AGENT_WINDOWS_VERSION: the '{version}'
+     * placeholder is replaced by that version in getConfig.
      */
-    const AGENT_WINDOWS_UPDATE_URL = 'https://github.com/BB2A-Anthony/dolibarr_windows_agent/releases/latest/download/DolibarrAgent.zip';
+    const AGENT_WINDOWS_UPDATE_URL = 'https://github.com/BB2A-Anthony/dolibarr_windows_agent/releases/download/{version}/DolibarrAgent.zip';
 
     public function __construct($db)
     {
