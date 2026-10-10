@@ -1,13 +1,14 @@
 <?php
 /**
- * Thirdparty enrollment endpoint (called by the agent at first connection).
+ * Enrollment endpoint (called by the agent at first connection).
  *
  * POST /custom/systeminfo/enroll_soc.php
  * Body JSON: {"code": "...", "guid": "..."}
  *
- * If the code is valid (< 5 min old, not used) AND the machine (guid) has
- * already reported at least once, the machine is assigned to the thirdparty
- * that generated the code, and the code is consumed.
+ * Replaces both the former global token (enroll.php) and the thirdparty
+ * enrollment: a single one-time code (valid 5 minutes) generated on the
+ * thirdparty card links the machine to the thirdparty AND delivers the
+ * technical user's API key. The code is consumed on success.
  */
 define('NOLOGIN', 1);
 define('NOCSRFCHECK', 1);
@@ -15,6 +16,7 @@ define('NOBROWSERNOTIFY', 1);
 
 require_once '../../main.inc.php';
 require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
+require_once DOL_DOCUMENT_ROOT . '/user/class/user.class.php';
 
 header('Content-Type: application/json');
 
@@ -70,7 +72,7 @@ if ($db->jdate($obj->date_valid) < dol_now()) {
     enroll_fail(403, 'Code expire (validite 5 minutes)');
 }
 
-// --- C2 fix 1: the machine must exist (it must have reported at least once) --
+// --- The machine must exist (it must have reported at least once) ------------
 
 $sql = "SELECT rowid FROM " . MAIN_DB_PREFIX . "systeminfo_reports";
 $sql .= " WHERE guid = '" . $db->escape($guid) . "'";
@@ -89,18 +91,26 @@ $sql = "UPDATE " . MAIN_DB_PREFIX . "systeminfo_reports";
 $sql .= " SET fk_soc = " . (int) $obj->fk_soc;
 $sql .= " WHERE guid = '" . $db->escape($guid) . "'";
 $resqlUpdate = $db->query($sql);
-
-// C2 fix 2: check affected_rows on the UPDATE result, not on the SELECT.
 if (!$resqlUpdate) {
     enroll_fail(500, 'Erreur lors de l\'affectation');
 }
 
-// Consume the code.
+// Consume the code (one-time use).
 $sql = "UPDATE " . MAIN_DB_PREFIX . "systeminfo_enroll";
 $sql .= " SET used = 1 WHERE rowid = " . (int) $obj->rowid;
 $db->query($sql);
 
-// Return human-readable thirdparty details.
+// --- Deliver the technical user's API key -----------------------------------
+
+$agentUser = new User($db);
+if ($agentUser->fetch('', 'useragent') <= 0) {
+    enroll_fail(500, 'Utilisateur technique useragent introuvable');
+}
+if (empty($agentUser->api_key)) {
+    enroll_fail(500, 'Aucune cle API pour useragent');
+}
+
+// Return human-readable thirdparty details for the agent confirmation message.
 $thirdparty = new Societe($db);
 $thirdparty->fetch((int) $obj->fk_soc);
 
@@ -118,4 +128,5 @@ echo json_encode(array(
     'thirdparty_alias' => $thirdparty->name_alias,
     'thirdparty_zip' => $thirdparty->zip,
     'thirdparty_town' => $thirdparty->town,
+    'api_key' => $agentUser->api_key,
 ));

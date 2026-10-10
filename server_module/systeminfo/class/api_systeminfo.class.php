@@ -89,7 +89,7 @@ class Systeminfo extends DolibarrApi
      * @return array
      * @throws RestException 404 Unknown machine/thirdparty
      */
-    public function putMachineSoc($guid, $fk_soc)
+    public function putMachineSoc($guid, $fk_soc, $force = 0)
     {
         $this->_checkHttps();
 
@@ -100,6 +100,16 @@ class Systeminfo extends DolibarrApi
         $report = new SysteminfoReport($this->db);
         if ($report->fetchLatest($guid) != 1) {
             throw new RestException(404, 'Machine guid=' . $guid . ' introuvable');
+        }
+
+        // M4 fix: refuse to silently reassign a machine that already belongs
+        // to a thirdparty, unless force is explicitly requested.
+        if ($report->fk_soc && empty($force)) {
+            throw new RestException(
+                409,
+                'Machine deja rattachee au tiers #' . $report->fk_soc
+                . ' : utilisez force=1 pour reassigner'
+            );
         }
 
         $thirdparty = new Societe($this->db);
@@ -177,7 +187,7 @@ class Systeminfo extends DolibarrApi
         $where = '';
         if ($sqlfilters) {
             try {
-                $where = $this->db->sanitizeSqlFilter($sqlfilters);
+                $where = $this->_sanitizeSqlFilter($sqlfilters);
             } catch (Exception $e) {
                 throw new RestException(400, 'Filtre invalide: ' . $e->getMessage());
             }

@@ -170,14 +170,6 @@ class modSystemInfo extends DolibarrModules
         $randomPassword = '';
         unset($randomPassword);
 
-        // Enrollment token: displayed once to the admin at activation, so the
-        // agent installer only needs URL + token to fetch its API key.
-        $existingToken = getDolGlobalString('SYSTEMINFO_ENROLL_TOKEN');
-        if (empty($existingToken)) {
-            $existingToken = dol_trunc(uniqid('', true) . uniqid('', true), 32, 'right', 'UTF-8', false);
-            dolibarr_set_const($this->db, 'SYSTEMINFO_ENROLL_TOKEN', $existingToken, 'chaine', 0, '', $conf->entity);
-        }
-
         dolibarr_set_const($this->db, 'SYSTEMINFO_AGENT_LOGIN', self::AGENT_LOGIN, 'chaine', 0, '', $conf->entity);
 
         // Grant read + write rights to the technical user so it can post
