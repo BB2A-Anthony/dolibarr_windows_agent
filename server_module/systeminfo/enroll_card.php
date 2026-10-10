@@ -62,25 +62,46 @@ if (GETPOST('token', 'alpha') && GETPOST('token', 'alpha') != $token) {
 
 llxHeader('', 'Agent - Ajouter une machine');
 
-// Generate a fresh code on each display of this page.
+// Purge expired or used codes (F6): keeps the table small.
+$sql = "DELETE FROM " . MAIN_DB_PREFIX . "systeminfo_enroll";
+$sql .= " WHERE date_valid < '" . $db->idate(dol_now() - 3600) . "'";
+$sql .= " OR (used = 1 AND date_valid < '" . $db->idate(dol_now()) . "')";
+$db->query($sql);
+
+// Limit active codes per thirdparty (F3): max 10 unused, unexpired codes.
+$sql = "SELECT COUNT(*) AS nb FROM " . MAIN_DB_PREFIX . "systeminfo_enroll";
+$sql .= " WHERE fk_soc = " . (int) $object->id;
+$sql .= " AND used = 0 AND date_valid > '" . $db->idate(dol_now()) . "'";
+$resql = $db->query($sql);
+$nbActive = 0;
+if ($resql) {
+    $objCount = $db->fetch_object($resql);
+    $nbActive = $objCount ? (int) $objCount->nb : 0;
+}
+
 $validity = 300;
 $error = '';
+$code = '';
 
-// C3 fix: cryptographically secure code (random_bytes), not md5(uniqid()).
-$code = strtoupper(bin2hex(random_bytes(4)));
-
-$sql = "INSERT INTO " . MAIN_DB_PREFIX . "systeminfo_enroll";
-$sql .= " (code, fk_soc, date_valid, used)";
-$sql .= " VALUES ('" . $db->escape($code) . "', " . (int) $object->id;
-$sql .= ", '" . $db->idate(dol_now() + $validity) . "', 0)";
-if (!$db->query($sql)) {
-    $error = $db->lasterror();
+if ($nbActive >= 10) {
+    $error = 'Trop de codes actifs pour ce tiers : attendez leur expiration (5 minutes) avant d\'en generer de nouveaux.';
 } else {
-    dol_syslog(
-        'systeminfo: code enrolement genere pour tiers #' . $object->id
-        . ' par utilisateur #' . $user->id,
-        LOG_INFO
-    );
+    // C3 fix: cryptographically secure code (random_bytes), not md5(uniqid()).
+    $code = strtoupper(bin2hex(random_bytes(4)));
+
+    $sql = "INSERT INTO " . MAIN_DB_PREFIX . "systeminfo_enroll";
+    $sql .= " (code, fk_soc, date_valid, used)";
+    $sql .= " VALUES ('" . $db->escape($code) . "', " . (int) $object->id;
+    $sql .= ", '" . $db->idate(dol_now() + $validity) . "', 0)";
+    if (!$db->query($sql)) {
+        $error = $db->lasterror();
+    } else {
+        dol_syslog(
+            'systeminfo: code enrolement genere pour tiers #' . $object->id
+            . ' par utilisateur #' . $user->id,
+            LOG_INFO
+        );
+    }
 }
 
 print load_fiche_titre('Ajouter une machine au tiers : ' . dol_escape_htmltag($object->name), '', 'globe');

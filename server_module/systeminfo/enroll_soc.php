@@ -40,6 +40,36 @@ if (!getDolGlobalString('SYSTEMINFO_ALLOW_HTTP')
     enroll_fail(426, 'HTTPS requis : activez HTTPS, ou definissez SYSTEMINFO_ALLOW_HTTP=1 (non recommande).');
 }
 
+// --- Rate limiting (F1): max 20 attempts per IP per 10 minutes -------------
+
+$ip = empty($_SERVER['REMOTE_ADDR']) ? 'unknown' : substr($_SERVER['REMOTE_ADDR'], 0, 64);
+$sql = "SELECT COUNT(*) AS nb FROM " . MAIN_DB_PREFIX . "systeminfo_ratelimit";
+$sql .= " WHERE ip = '" . $db->escape($ip) . "'";
+$sql .= " AND date_attempt > '" . $db->idate(dol_now() - 600) . "'";
+$resql = $db->query($sql);
+$nbAttempts = 0;
+if ($resql) {
+    $objRate = $db->fetch_object($resql);
+    $nbAttempts = $objRate ? (int) $objRate->nb : 0;
+}
+if ($nbAttempts >= 20) {
+    enroll_fail(429, 'Trop de tentatives, reessayez plus tard.');
+}
+$sql = "INSERT INTO " . MAIN_DB_PREFIX . "systeminfo_ratelimit (ip, date_attempt)";
+$sql .= " VALUES ('" . $db->escape($ip) . "', '" . $db->idate(dol_now()) . "')";
+$db->query($sql);
+// Purge attempts older than 1 hour (cheap, keeps the table small).
+$sql = "DELETE FROM " . MAIN_DB_PREFIX . "systeminfo_ratelimit";
+$sql .= " WHERE date_attempt < '" . $db->idate(dol_now() - 3600) . "'";
+$db->query($sql);
+
+// --- Payload size limit (F5): refuse bodies larger than 1 MB ----------------
+
+$contentLength = empty($_SERVER['CONTENT_LENGTH']) ? 0 : (int) $_SERVER['CONTENT_LENGTH'];
+if ($contentLength > 1048576) {
+    enroll_fail(413, 'Corps de requete trop volumineux.');
+}
+
 $payload = json_decode(file_get_contents('php://input'), true);
 if (!is_array($payload) || empty($payload['code']) || empty($payload['guid'])) {
     $guid = '';

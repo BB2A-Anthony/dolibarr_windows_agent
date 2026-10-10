@@ -52,6 +52,11 @@ class Systeminfo extends DolibarrApi
             throw new RestException(400, 'Champ guid manquant');
         }
 
+        // F5: refuse oversized reports (a real report is ~50 KB).
+        if (strlen(json_encode($payload)) > 1048576) {
+            throw new RestException(413, 'Rapport trop volumineux.');
+        }
+
         $payload['softwares'] = $this->_matchSoftwares(
             isset($payload['installed_softwares']) ? $payload['installed_softwares'] : array()
         );
@@ -184,6 +189,8 @@ class Systeminfo extends DolibarrApi
      */
     public function indexMachine($sqlfilters = '')
     {
+        $this->_checkHttps();
+
         $where = '';
         if ($sqlfilters) {
             try {
@@ -211,6 +218,8 @@ class Systeminfo extends DolibarrApi
      */
     public function getMachine($guid)
     {
+        $this->_checkHttps();
+
         $report = new SysteminfoReport($this->db);
         $result = $report->fetchLatest($guid);
         if ($result < 0) {
