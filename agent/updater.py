@@ -83,20 +83,46 @@ def check_update(config):
         return False, info
     if _version_tuple(version) <= _version_tuple(AGENT_VERSION):
         return False, info
-    # Security: the update package must be served by the configured
-    # Dolibarr server (same host), never an arbitrary third-party URL.
-    from agent.sender import dolibarr_url
-
-    base = dolibarr_url(config, "").split("/api/index.php")[0]
+    # Security: the update package must come from the configured Dolibarr
+    # server or an allowed host (default: the project's GitHub releases),
+    # never an arbitrary third-party URL.
     download_url = info.get("download_url") or ""
-    if download_url and not download_url.startswith(base):
+    if download_url and not _url_allowed(config, download_url):
         logger.warning(
-            "Mise a jour ignoree : download_url (%s) hors du serveur Dolibarr (%s)",
+            "Mise a jour ignoree : download_url (%s) ni sur le serveur Dolibarr ni sur un hote autorise",
             download_url,
-            base,
         )
         return False, info
     return True, info
+
+
+ALLOWED_UPDATE_HOSTS = (
+    "github.com",
+    "objects.githubusercontent.com",
+)
+
+
+def _url_allowed(config, url):
+    """True when the download URL points to the configured Dolibarr server
+    or to one of the allowed update hosts (GitHub releases by default)."""
+    from agent.sender import dolibarr_url
+
+    try:
+        from urllib.parse import urlparse
+
+        host = urlparse(url).netloc.lower()
+    except ValueError:
+        return False
+    if not host:
+        return False
+    base = dolibarr_url(config, "")
+    try:
+        dolibarr_host = urlparse(base).netloc.lower()
+    except ValueError:
+        dolibarr_host = ""
+    if dolibarr_host and host == dolibarr_host:
+        return True
+    return any(host == allowed or host.endswith("." + allowed) for allowed in ALLOWED_UPDATE_HOSTS)
 
 
 def _version_tuple(version):
